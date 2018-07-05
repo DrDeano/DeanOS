@@ -12,10 +12,10 @@
 %macro m_reset_disk 0
 ; Now need to reset the floppy drive so that we can get information from it
 	mov		dl, byte [Logical_drive_number] ; The drive to reset
-	xor		ah, ah                          ; The sub funtion to reset the floppy
-	int		0x13                            ; Call BIOS interupt 13h
+	xor		ah, ah                          ; The sub function to reset the floppy
+	int		0x13                            ; Call BIOS interrupt 13h
 	jc		boot_error						; If there was an error resetting the floppy, then the carry bit will be set
-											; If so, jump to failure funtion and reboot
+											; If so, jump to failure function and reboot
 %endmacro
 
 ; Fine a file on the disk
@@ -52,7 +52,7 @@
 	call	read_sector				; Read the root directory stored in ax
 	;xchg bx, bx
 .check_entry:						; Check that the loaded sector contain the file we want
-	mov		cx, 11					; Directory entrys are 11 bytes long (file name + file extension = 8 + 3)
+	mov		cx, 11					; Directory entry's are 11 bytes long (file name + file extension = 8 + 3)
 	mov		di, bx					; es:di is the directory entry address
 	lea		si, [%1]				; Load the file name the we are checking for into the si register (ds:si)
 	repz	cmpsb					; Compare the filename in si to memory (for 11 bytes)
@@ -65,7 +65,7 @@
 	pop		ax
 	inc		ax						; Increment to the next logical block address 
 	pop		cx
-	loopnz	.read_next_sector		; Decreament cx counter and if not 0 then read the next sector
+	loopnz	.read_next_sector		; Decrement cx counter and if not 0 then read the next sector
 	jmp		boot_error				; Else if 0, then the file wasn't found so reboot
 .found_file:						; The stage 2 bootloader file has been found
 	mov		ax, word [es:(bx + 0x1a)]	; The directory entry stores the first cluster number of the file
@@ -97,7 +97,7 @@
 	pop		cx
 	inc		ax								; Increment the logical block address for the next sector
 	add		bx, word [Bytes_per_sector]		; Increment by the size of the sector sector
-	loopnz	.read_next_fat_sector			; Repeatly read each FAT into memory (cx of them)
+	loopnz	.read_next_fat_sector			; Repeatedly read each FAT into memory (cx of them)
 %endmacro
 
 ; Read a file into memory
@@ -108,7 +108,7 @@
 ; ES:BX - Is used for the buffer location which the sectors will be read into
 ; CX    - Is used for calculating the next FAT entry
 ;       - Then storing the next FAT entry
-; DX    - Is used for testing whether to mask the upper bits or shify out the 4 bits
+; DX    - Is used for testing whether to mask the upper bits or shift out the 4 bits
 ; DS:SI - Is used for the location for the FAT table and SI to index into the FAT table
 
 %macro m_read_file 2
@@ -160,7 +160,7 @@
 	shr		cx, 4							; Shift the 4 bits to the right 
 .read_next_file_cluster_done:
 	pop		ds								; Restore ds segment to normal
-	cmp		cx, 0xff8						; If FAT enrty is 0x0ff8, then is the end of file (for FAT12)
+	cmp		cx, 0xff8						; If FAT entry is 0x0ff8, then is the end of file (for FAT12)
 	jl		.read_next_file_sector			; If not end of file, read the next sector
 %endmacro
 

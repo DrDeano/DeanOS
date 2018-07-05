@@ -1,4 +1,4 @@
-; Set up the interupt descriptor table
+; Set up the interrupt descriptor table
 ; This is to be stored at 0x0000:0x0000
 %macro m_setup_idt 0
 	push	es

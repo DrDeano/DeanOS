@@ -1,19 +1,19 @@
 ; Print a null terminated string to the screen
 ; ds:si is the location of the string
 ; Input:
-;   si - pointer to the sring to be printed in register si
+;   si - pointer to the string to be printed in register si
 print_string_with_new_line:
     pusha				; Push all registers onto the stack
-    mov     ah, 0x0e	; Specify the teletype output funtion
+    mov     ah, 0x0e	; Specify the teletype output function
 	xor		bx, bx
 .loop:
     lodsb				; Load byte at address si into al and increment si
     cmp	    al, 0		; If it the end of the null-terminated string
     je      .done		; Then exit
-    int     0x10		; Else print the character in al as an interupt into the BIOS
+    int     0x10		; Else print the character in al as an interrupt into the BIOS
     jmp     short .loop ; Repeat for next character
 .done:
-	; Print the line feed and carrage return
+	; Print the line feed and carriage return
 	mov		al, 0x0a	; Teletype print sub function(0x0e), Line feed (0x0a)
     int     0x10
     mov     al, 0x0d	; Carriage return
@@ -25,7 +25,7 @@ print_string_with_new_line:
 reboot:
 	m_write_line reboot_msg
     
-    xor 	ah, ah					; Sub funtion for reading a character
+    xor 	ah, ah					; Sub function for reading a character
     int 	0x16     				; Wait for key press
     int 	0x19     				; Warm reboot
     
@@ -34,7 +34,7 @@ reboot:
 	
 ; Read a sector from the disk
 ; es:bx is the location of the buffer that the data is read into
-; As reads oftern fail, it will try 4 times to read from the disk. The counter is stored in cx.
+; As reads often fail, it will try 4 times to read from the disk. The counter is stored in cx.
 ; With the data buffer at es:bx
 ; Input:
 ;	ax    - The logical block address (LBA)
@@ -47,18 +47,18 @@ read_sector:
 	
 	; Convert the logical block address into the head-cylinder/track-sector values
 	
-; The convertions are:
+; The conversions are:
 ; (1) Sector   = (LBA mod SectorsPerTrack) + 1
 ; (2) Cylinder = (LBA / SectorsPerTrack) / NumHeads
 ; (3) Head     = (LBA / SectorsPerTrack) mod NumHeads
 ;
 ; Input:
 ;	ax - the logical block address
-; Output: These are used for the 0x13 BIOS interupt to read from the disk along with es:bx and ax
+; Output: These are used for the 0x13 BIOS interrupt to read from the disk along with es:bx and ax
 ;	ch - Lower 8 bits of cylinder
 ;	cl - Upper 2 bits of cylinder and 6 bits for the sector
 ;	dh - The head number
-;	dl - The dirve number/ID
+;	dl - The drive number/ID
 .lba_to_hcs:
 	push	bx							; Save the buffer location
 	
@@ -69,30 +69,30 @@ read_sector:
 										; Remainder (dx) - LBA mod SectorsPerTrack
 									
 	inc		dx							; (1) Sector = (LBA mod SectorsPerTrack) + 1
-	mov		cl, dl						; Store sector in cl as defined for the output and for the 0x13 BIOS interupt
+	mov		cl, dl						; Store sector in cl as defined for the output and for the 0x13 BIOS interrupt
 	
 	;mov		bx, word [Head_count]	; Get the number of heads
 	xor		dx, dx
 	div		word [Head_count]			; Quotient (ax)  - Cylinder = (LBA / SectorsPerTrack) / NumHeads
 										; Remainder (dx) - Head     = (LBA / SectorsPerTrack) mod NumHeads
 	
-	mov		ch, al						; Store cylinder in ch as defined for the output and for the 0x13 BIOS interupt
-	mov		dh, dl						; Store head in dh as defined for the output and for the 0x13 BIOS interupt
+	mov		ch, al						; Store cylinder in ch as defined for the output and for the 0x13 BIOS interrupt
+	mov		dh, dl						; Store head in dh as defined for the output and for the 0x13 BIOS interrupt
 	
-	mov		dl, byte [Logical_drive_number]	; Store dirve number in dl as defined for the output and for the 0x13 BIOS interupt
+	mov		dl, byte [Logical_drive_number]	; Store drive number in dl as defined for the output and for the 0x13 BIOS interrupt
 	
 	pop		bx							; Restore the buffer location
 	
 	; Using the values above, read off the drive
 	
-	mov		ax, 0x0201				; Sub funtion 2 to read from the disk, Read 1 (0x01) sector
-	int		0x13					; Call BIOS interupt 13h
+	mov		ax, 0x0201				; Sub function 2 to read from the disk, Read 1 (0x01) sector
+	int		0x13					; Call BIOS interrupt 13h
 	jc		short .read_fail		; If fails to read (carry bit set)
 
 	pop		cx
 	pop		ax						; Restore the logical block address
 	ret								; If read successful, then return to caller
-.read_fail:							; If failed to read, try again, if tryed 4 times, the reboot
+.read_fail:							; If failed to read, try again, if tried 4 times, the reboot
 	pop		cx						; Restore the counter
 	inc		cx						; Increment the counter
 	cmp		cx, 4					; Compare if counter is equal to 4
@@ -102,5 +102,3 @@ read_sector:
 	
 	pop		ax						; Restore the logical block address
 	jmp		.read					; Try to read again
-
-

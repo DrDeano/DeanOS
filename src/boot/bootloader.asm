@@ -4,7 +4,7 @@
 ; ---------------------------------------------------------------------
 
 %define boot0_location          (0x7c00)   ; The location that BOOT0 is load to by the BIOS
-%define boot_signature          (0xaa55)   ; The boot signature that is needed at the end of the 512 byts so that it is recognised as a boot device.
+%define boot_signature          (0xaa55)   ; The boot signature that is needed at the end of the 512 bytes so that it is recognized as a boot device.
 %define fat_segment				(0x0ee0)   ; The memory location to load the FAT into memory
 %define stage_2_load_segment    (0x0100)   ; The location of the second stage bootloader
 
@@ -17,7 +17,7 @@
     
 ; Need to pad to a total of 3 bytes so far.
 ; This is so to comply with the FAT16 header.
-; We could use a NOP instruction as the previous instruction (jmp) is 2 byts and NOP is 1 byte
+; We could use a NOP instruction as the previous instruction (jmp) is 2 bytes and NOP is 1 byte
 ; See https://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 ; Bytes 0-2
 times (3 - ($ - $$)) db 0
@@ -39,7 +39,7 @@ start_boot0_16bit:
 	; Set up the memory segment for accessing memory the old way.
 	; ------------------------------------------------------------------------
 	
-	cli                        ; Disable interupts so not mess up the declarations of the segments
+	cli                        ; Disable interrupts so not mess up the declarations of the segments
 	
 	mov		byte [Logical_drive_number], dl ; Save what drive we booted from (should be 0x0) into our boot parameter block above
 	
@@ -50,7 +50,7 @@ start_boot0_16bit:
 	
 	mov 	sp, boot0_location ; Set the stack pointer to the bootloader and grows down to 0x0.
     
-    sti                        ; Enable interupts
+    sti                        ; Enable interrupts
 	
 	; ------------------------------------------------------------------------
 	; Finished setting up the memory segment for accessing memory the old way.
@@ -79,7 +79,7 @@ start_boot0_16bit:
     jmp     stage_2_load_segment:0000h
 
 
-; If there is a floppy disk error or a boot error, the call this funtion
+; If there is a floppy disk error or a boot error, the call this function
 boot_error:
 	m_write_line disk_error_msg		; Print the disk error message
 	m_reboot						; Reboot

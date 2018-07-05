@@ -56,7 +56,7 @@ stage_2_bootload_start:
 	; Enable the a20 line
 	m_enable_a20
 	
-	; Set up and write into memory the interupt descriptor table
+	; Set up and write into memory the interrupt descriptor table
 	m_setup_idt
 	
 	; Set up and write into memory the global descriptor table
@@ -70,7 +70,7 @@ stage_2_bootload_start:
 	
 	jmp		0x08:stage_2_bootloader_32
 
-; If there is a floppy disk error or a boot error, the call this funtion
+; If there is a floppy disk error or a boot error, the call this function
 boot_error:
 	m_write_line disk_error_msg		; Print the disk error message
 	m_reboot						; Reboot
@@ -78,7 +78,7 @@ boot_error:
 %include 'functions.asm'
 
 idt_descriptor:
-	dw 0x0000						; 256 entries of 8 bytes for the interupt table
+	dw 0x0000						; 256 entries of 8 bytes for the interrupt table
     dd 0x0000						; The location of the table, at 0x0000:0x0000
 	
 gdt_descriptor:

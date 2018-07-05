@@ -1,5 +1,5 @@
 ; Purpose: to check the status of the a20 line in a completely self-contained state-preserving way.
-;          The function can be modified as necessary by removing push's at the beginning and their
+;          The function can be modified as necessary by removing pushes at the beginning and their
 ;          respective pop's at the end if complete self-containment is not required.
 ;
 ; Returns: 0 in ax if the a20 line is disabled (memory wraps around)
