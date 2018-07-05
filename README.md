@@ -21,3 +21,15 @@ The makefile is a shambles, so any suggestions on better makefiles are appreciat
 * `copy` - Windows cms for copying files onto the floppy image
 
 I'm sorry that this will hurt people to see as using Windows and Linux together, so if anyone has suggestions and/or better makefile that works that I can use, please let me know. Makefiles are new to me so any changes made, can you comment them so I can understand what is going on. Especially a makefile that just uses Linux commands would be best. I have tried using `dd` for creating the boot sector but couldn't get it working correctly, so any way of getting ride of some Windows commands will be good.
+
+## Testing
+You can run `make debug` which will create all the files needed and run in the qemu emulator. You can then attach a GDB debugger by adding the lines into .gdbinit or type the commands directly:
+```
+set architectrue i386
+target remote localhost:1234
+br *0x7c00
+c
+```
+This will set the architecture to 16 bit x86 as this is what the bootloader is coded in to start with. Then connects to the emulator on port 1234 (defualt for qemu). Then sets a break point at the beginning of the bootloader. The starts the OS and stops at the begining of the bootloader.
+
+If want to break at the beginning of the kernel, the address it is loaded at is 0x100000. So replace `br *0x7c00` with `br *0x100000`.
