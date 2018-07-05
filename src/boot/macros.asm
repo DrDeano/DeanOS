@@ -50,7 +50,7 @@
 	push	ax						; Save the start of the root directory on the stack
 	xor		bx, bx
 	call	read_sector				; Read the root directory stored in ax
-	;xchg bx, bx
+	
 .check_entry:						; Check that the loaded sector contain the file we want
 	mov		cx, 11					; Directory entry's are 11 bytes long (file name + file extension = 8 + 3)
 	mov		di, bx					; es:di is the directory entry address
@@ -137,7 +137,8 @@
 	mov		dx, %2							; Make ds:si (the data segment) point to the FAT
 	mov		ds, dx
 	
-	push	bx								; Save BX as is used for multiply and divide
+	push	bx								; Save BX as is used for multiply and divide and contains the load location
+	
 	mov		ax, cx							; Get the start of the FAT entry
 	xor		dx, dx							; Set DX to 0 for the multiply and divide
 	mov		bx, 3							; For multiply by 3    -|
@@ -146,6 +147,7 @@
 	div		bx								; AX - (AX * 3) / 2    -|
 											; DX - (AX * 3) mod 2  - This to check which 4 bits of a byte is needed
 	mov		si, ax							; Set the location for the next FAT entry at DS:SI
+	
 	pop		bx								; Restore BX for the buffer location
 
 	mov		cx, word [ds:si]				; Read the FAT entry

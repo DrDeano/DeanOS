@@ -16,7 +16,7 @@
 %macro m_setup_gdt 0
 	;xor		ax, ax
 	;mov		es, ax
-	mov		di, 0x0800
+	;mov		di, 0x0800
 
 	; NULL Descriptor:
 	mov		cx, 4                         ; Write the NULL descriptor,
