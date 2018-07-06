@@ -7,11 +7,11 @@ The makefile is a shambles, so any suggestions on better makefiles are appreciat
 
 
 ## Prerequisite
-* `nams` - For assembling the bootloader
-* `gcc` - For compiling the Kernel and inluded C Library
+* `nasm` - For assembling the bootloader
+* `gcc` - For compiling the Kernel and included C Library
 * `ld` - For linking all the kernel files together
 * `objcopy` - For creating the kernel binary from the elf file
-* `ar` - For creating the C Libray library
+* `ar` - For creating the C Library library
 * `make` - To run the makefile
 * `qemu` - To run the OS
 * `Windows Linux subsystem`:
@@ -25,11 +25,11 @@ I'm sorry that this will hurt people to see as using Windows and Linux together,
 ## Testing
 You can run `make debug` which will create all the files needed and run in the qemu emulator. You can then attach a GDB debugger by adding the lines into .gdbinit or type the commands directly:
 ```
-set architectrue i386
+set architecture i386
 target remote localhost:1234
 br *0x7c00
 c
 ```
-This will set the architecture to 16 bit x86 as this is what the bootloader is coded in to start with. Then connects to the emulator on port 1234 (defualt for qemu). Then sets a break point at the beginning of the bootloader. The starts the OS and stops at the begining of the bootloader.
+This will set the architecture to 16 bit x86 as this is what the bootloader is coded in to start with. Then connects to the emulator on port 1234 (default for qemu). Then sets a break point at the beginning of the bootloader. The starts the OS and stops at the beginning of the bootloader.
 
 If want to break at the beginning of the kernel, the address it is loaded at is 0x100000. So replace `br *0x7c00` with `br *0x100000`.

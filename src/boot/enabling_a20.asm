@@ -135,13 +135,13 @@ a20_wait_data:												;  But need to check if the keyboard is ready to recei
 	cmp		ax, 0
 	jne		.a20_enabled
 	
-	m_enable_a20_via_bios
+	m_enable_a20_via_keyboard
 	
 	call	test_a20
 	cmp		ax, 0
 	jne		.a20_enabled
 	
-	m_enable_a20_via_keyboard
+	m_enable_a20_via_bios
 	
 	call	test_a20
 	cmp		ax, 0

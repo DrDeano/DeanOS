@@ -76,7 +76,7 @@ start_boot0_16bit:
 	; ------------------------------------------------------------------------
 	
     ; Jump to second stage start of code:    
-    jmp     stage_2_load_segment:0000h
+    jmp     long stage_2_load_segment:0000h
 
 
 ; If there is a floppy disk error or a boot error, the call this function

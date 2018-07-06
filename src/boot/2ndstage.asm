@@ -91,6 +91,8 @@ loading_msg     	db "Loading: 2nd stage bootloader", 0
 reboot_msg      	db "Press any key to reboot", 0
 a20_error	      	db "a20 line not initialised", 0
 
+loading_kernel     	db "Loading: Kernel", 0xA, 0
+
 
 ; Data storage
 root_sectors 		db 0,0
@@ -105,6 +107,8 @@ kernel_size			db 0,0
 stage_2_bootloader_32:
 	m_set_up_segments
 	
+	lea		esi, [loading_kernel]
+	call print_string_32
 	; Move kernel to target location
 	cld
 	mov		esi, kernel_location
@@ -114,7 +118,9 @@ stage_2_bootloader_32:
 	
 	jmp		kernel_target_location
 
-times (2 * 512) - ($ - $$) db 0
+%include '32bit_functions.asm'
+
+times (3 * 512) - ($ - $$) db 0
 
 	[absolute	kernel_parameters]
 
