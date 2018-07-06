@@ -99,7 +99,7 @@ root_sectors 		db 0,0
 root_start   		db 0,0
 file_start			db 0,0
 
-kernel_size			db 0,0
+kernel_size			db 0,0,0,0
 
 ; Now in 32bit mode
 	[bits	32]
@@ -113,8 +113,9 @@ stage_2_bootloader_32:
 	cld
 	mov		esi, kernel_location
 	mov		edi, kernel_target_location
-	mov		cx, word [kernel_size]
-	rep		movsb
+	mov		ecx, dword [kernel_size]
+	shr		ecx, 2						; Divide by 4 as now copying 4 bytes at a time
+	rep		movsd
 	
 	jmp		kernel_target_location
 
