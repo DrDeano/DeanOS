@@ -80,7 +80,7 @@ static void display_time() {
 	rtc_date_time_t date;
 	get_time(&date);
 	// DD-MM-YYYY hh:mm:ss
-	kprintf("%s %02d-%02d-%04d %02d:%02d:%02d\n", str_day[on_screen_time.day_of_week], date.day, date.month, date.year, date.hour, date.minute, date.second);
+	kprintf("%s %02d-%02d-%04d %02d:%02d:%02d\n", str_day[date.day_of_week], date.day, date.month, date.year, date.hour, date.minute, date.second);
 }
 
 static void add_command(char * cmd) {

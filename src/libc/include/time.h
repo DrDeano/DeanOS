@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CLOCKS_PER_SEC 1
 #define TIME_UTC 1
 
@@ -22,5 +26,8 @@ typedef uint32_t clock_t;
 
 typedef uint32_t time_t;
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _TIME_H */
