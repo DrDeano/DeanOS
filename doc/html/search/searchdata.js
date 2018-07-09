@@ -1,12 +1,13 @@
 var indexSectionsWithContent =
 {
-  0: "_abcgipstv",
-  1: "_bgi",
-  2: "bpstv",
-  3: "agt",
+  0: "_abcfgkprstv",
+  1: "_bfkrt",
+  2: "bgkpstv",
+  3: "agkpt",
   4: "cs",
   5: "v",
-  6: "asv"
+  6: "apsv",
+  7: "t"
 };
 
 var indexSectionNames =
@@ -17,7 +18,8 @@ var indexSectionNames =
   3: "functions",
   4: "variables",
   5: "enums",
-  6: "defines"
+  6: "defines",
+  7: "pages"
 };
 
 var indexSectionLabels =
@@ -28,6 +30,7 @@ var indexSectionLabels =
   3: "Functions",
   4: "Variables",
   5: "Enumerations",
-  6: "Macros"
+  6: "Macros",
+  7: "Pages"
 };
 

@@ -16,7 +16,7 @@
 #include <isr.h>
 #include <irq.h>
 #include <interrupt.h>
-#include <timer.h>
+#include <pit.h>
 #include <keyboard.h>
 #include <main.h>
 #include <rtc.h>
@@ -465,7 +465,7 @@ static void kernel_task() {
 		} else if(strcmp(command_buffer, "hello") == 0) {
 			kprintf("Hello there\n");
 		} else if (strcmp(command_buffer, "uptime") == 0) {
-			unsigned int ticks = get_timer_ticks();
+			unsigned int ticks = get_pit_ticks();
 			unsigned int sec = (ticks / 18) % 60;
 			unsigned int min = (ticks / (18 * 60)) % 60;
 			unsigned int hr = (ticks / (18 * 60 * 60)) % 24;
@@ -511,7 +511,7 @@ noreturn void kernel_main(void) {
 	
 	irq_init();
 	
-	timer_install();
+	pit_install();
 	
 	keyboard_init();
 	

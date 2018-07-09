@@ -1,9 +1,9 @@
 #ifndef INCLUDE_IRQ_H
 #define INCLUDE_IRQ_H
 
-#define IRQ_TOTAL	16
-
 #include <regs_t.h>
+
+#define IRQ_TOTAL	16
 
 // IRQ handler type
 typedef void (*irq_handler)(regs_t * regs);

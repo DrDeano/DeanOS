@@ -1,6 +1,7 @@
 #include <irq.h>
 #include <portio.h>
 #include <idt.h>
+#include <pic.h>
 
 #include <stdio.h>
 
@@ -38,27 +39,6 @@ void irq_uninstall_handler(int irq) {
 	kprintf("IRQ Handle for %u uninstalled\n", irq);
 }
 
-/* Normally, IRQs 0 to 7 are mapped to entries 8 to 15. This
- * is a problem in protected mode, because IDT entry 8 is a
- * Double Fault! Without remapping, every time IRQ0 fires,
- * you get a Double Fault Exception, which is NOT actually
- * what's happening. We send commands to the Programmable
- * Interrupt Controller (PIC) in order to make IRQ0 to 15
- * be remapped to IDT entries 32 to 47
- */
-static void irq_remap(void) {
-	out_port_byte(0x20, 0x11);
-	out_port_byte(0xA0, 0x11);
-	out_port_byte(0x21, 0x20);
-	out_port_byte(0xA1, 0x28);
-	out_port_byte(0x21, 0x04);
-	out_port_byte(0xA1, 0x02);
-	out_port_byte(0x21, 0x01);
-	out_port_byte(0xA1, 0x01);
-	out_port_byte(0x21, 0x0);
-	out_port_byte(0xA1, 0x0);
-}
-
 /* Each of the IRQ ISRs point to this function, rather than
  * the 'fault_handler' in 'isrs.c'. The IRQ Controllers need
  * to be told when you are done servicing them, so you need
@@ -71,21 +51,18 @@ static void irq_remap(void) {
  * an EOI, you won't raise any more IRQs
  */
 void _irq_handler(regs_t * regs) {
+	uint8_t irq = regs->int_num - 32;
+	
 	// Get the handler
-	irq_handler handler = irq_handlers[regs->int_num - 32];
+	irq_handler handler = irq_handlers[irq];
 
 	// Run the handler if got one
 	if (handler) {
 		handler(regs);
 	}
-
-	// If the IDT entry that was invoked was greater than 40 (meaning IRQ8 - 15), then we need to send an EOI to the slave controller
-	if (regs->int_num >= 40) {
-		out_port_byte(0xA0, 0x20);
-	}
-
-	// In either case, we need to send an EOI to the master interrupt controller too
-	out_port_byte(0x20, 0x20);
+	
+	// Send the end of interrupt command
+	pic_send_end_of_interrupt(irq);
 }
 
 /* We first remap the interrupt controllers, and then we install
@@ -93,9 +70,9 @@ void _irq_handler(regs_t * regs) {
  * is just like installing the exception handlers
  */
 void irq_init() {
-	kprintf("Initialising iterrupt requests\n");
+	kprintf("Initialising interrupt requests\n");
 
-	irq_remap();
+	pic_remap_irq();
 
 	idt_open_interrupt_gate(32, (uintptr_t) &_irq00);
 	idt_open_interrupt_gate(33, (uintptr_t) &_irq01);

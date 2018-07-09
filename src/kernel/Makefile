@@ -20,9 +20,10 @@ OBJS = $(BIN)/start.o \
 	$(BIN)/boot.o \
 	$(BIN)/gdt.o \
 	$(BIN)/idt.o \
+	$(BIN)/pic.o \
 	$(BIN)/isr.o \
 	$(BIN)/irq.o \
-	$(BIN)/timer.o \
+	$(BIN)/pit.o \
 	$(BIN)/keyboard.o \
 	$(BIN)/paging.o \
 	$(BIN)/rtc.o \

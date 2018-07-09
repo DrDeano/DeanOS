@@ -1,6 +1,6 @@
 #include <speaker.h>
 #include <portio.h>
-#include <timer.h>
+#include <pit.h>
 
 void speaker_set(int hz) {
 	int divisor = 1193180 / hz;
@@ -18,13 +18,14 @@ void beep(unsigned int wait_time, unsigned int times) {
         if(tempA != (tempA | 3)) {
             out_port_byte(0x61, tempA | 3);
         }
-        timer_wait(wait_time);
+        pit_wait(wait_time * 18);
         out_port_byte(0x61, tempB);
-		timer_wait(1);
+		pit_wait(1 * 18);
    }
 } 
 
 void speaker_init() {
-	speaker_set(1000);   
-    beep(2,2);
+	//out_port_byte(0x61, 3 | (unsigned char) (1000<<2) );
+	//speaker_set(1000);   
+    //beep(2,2);
 }
