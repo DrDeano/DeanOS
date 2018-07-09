@@ -42,6 +42,8 @@ bin/
 *.bxrc
 *.ini
 
+doc/
+
 # Debug files
 *.dSYM/
 *.su
