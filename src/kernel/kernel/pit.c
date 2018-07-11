@@ -1,114 +1,127 @@
 #include <pit.h>
+#include <pic.h>
 #include <portio.h>
 #include <irq.h>
 #include <regs_t.h>
 
 #include <stdio.h>
 
-// This will keep track of how many ticks that the system has been running for
+/**
+ *  \var pit_ticks
+ *  
+ *  \brief The number of tick that has passed when the PIT was initially set up.
+ */
 static volatile uint32_t pit_ticks;
 
 /**
- *  \brief Inline function to send a command to the PIT command register
+ *  \var divisor
  *  
- *  \param [in] cmd The command to send to the PIT
+ *  \brief The divisor the PIT uses to work out the tick rate of the counter.
+ */
+static uint16_t divisor;
+
+/**
+ *  \brief Inline function to send a command to the PIT command register.
+ *  
+ *  \param [in] cmd The command to send to the PIT.
  */
 static inline void pit_send_command(uint8_t cmd) {
 	out_port_byte(PIT_REG_COMMAND, cmd);
 }
 
 /**
- *  \brief Inline function for sending data to counter 0 of the PIT
+ *  \brief Inline function for sending data to counter of the PIT. Will be only one of the 3
+ *  counters as is an internal function.
  *  
- *  \param [in] data The data to send
+ *  \param [in] data The data to send.
  */
-static inline void pit_send_data_counter0(uint8_t data) {
-	out_port_byte(PIT_REG_COUNTER0, data);
+static inline void pit_send_data(uint8_t counter, uint8_t data) {
+	out_port_byte(counter, data);
 }
 
 /**
- *  \brief Inline function for sending data to counter 1 of the PIT
+ *  \brief Inline function for receiving data from a counter of the PIT. Will be only one of the 3
+ *  counters as is an internal function.
  *  
- *  \param [in] data The data to send
+ *  \param [in] counter The counter number to get the data from.
+ *  \return The data from the counter register.
  */
-static inline void pit_send_data_counter1(uint8_t data) {
-	out_port_byte(PIT_REG_COUNTER1, data);
+static inline uint8_t pit_receive_data_counter(uint8_t counter) {
+	return in_port_byte(counter);
 }
 
-/**
- *  \brief Inline function for sending data to counter 2 of the PIT
- *  
- *  \param [in] data The data to send
- */
-static inline void pit_send_data_counter2(uint8_t data) {
-	out_port_byte(PIT_REG_COUNTER2, data);
-}
-
-// Receive
-
-static inline uint8_t pit_receive_data_counter0() {
-	return in_port_byte(PIT_REG_COUNTER0);
-}
-
-static inline uint8_t pit_receive_data_counter1() {
-	return in_port_byte(PIT_REG_COUNTER1);
-}
-
-static inline uint8_t pit_receive_data_counter2() {
-	return in_port_byte(PIT_REG_COUNTER2);
-}
-
-void pit_set_tick_speed(uint16_t hz) {
-	if(hz == 0) {
+void pit_setup_counter(uint16_t freq, uint8_t counter, uint8_t mode) {
+	if(freq == 0) {
 		return;
 	}
 	
-	/* if(hz > 1193180) {
+	/* if(freq > 1193180) {
 		return;
 	} */
 	
-	uint16_t divisor = 1193180 / hz;
+	/* if(counter != PIT_OCW_SELECT_COUNTER_0 || counter != PIT_OCW_SELECT_COUNTER_1 || counter != PIT_OCW_SELECT_COUNTER_2) {
+		return;
+	} */
+	
+	uint8_t port;
+	
+	if(counter == PIT_OCW_SELECT_COUNTER_0) {
+		port = PIT_REG_COUNTER_0;
+	} else if (counter == PIT_OCW_SELECT_COUNTER_1) {
+		port = PIT_REG_COUNTER_1;
+	} else if (counter == PIT_OCW_SELECT_COUNTER_2) {
+		port = PIT_REG_COUNTER_2;
+	} else {
+		return;
+	}
+	
+	divisor = 1193180 / freq;
 	
 	uint8_t cmd = 0;
-	cmd |= PIT_OCW_BINARY_COUNT_BINARY;				// Going to count in binary
-	cmd |= PIT_OCW_MODE_SQUARE_WAVE_GENERATOR;		// With a square wave
-	cmd |= PIT_OCW_READ_LOAD_DATA;					// Going to load LSB first then MSB
-	cmd |= PIT_OCW_SELECT_COUNTER_0;				// This is for counter 0
+	cmd |= mode;
+	cmd |= PIT_OCW_READ_LOAD_DATA;		// Going to load LSB first then MSB
+	cmd |= counter;
 	
 	pit_send_command(cmd);							// Send the command
 	
 	// Send the divisor to the PIT
-	pit_send_data_counter0(divisor & 0xFF);			// Set the lower half
-	pit_send_data_counter0((divisor >> 8) & 0xff);	// Set the upper half
+	pit_send_data(port, divisor & 0xFF);			// Set the lower half
+	pit_send_data(port, (divisor >> 8) & 0xff);		// Set the upper half
+	
+	/**
+	 *  \todo Add support of more counter variables
+	 */
+	pit_ticks = 0;		// Reset the tick counter
 }
 
-/* Handles the PIT. In this case, it's very simple: We
- * increment the 'pit_ticks' variable every time the
- * pit fires. By default, the pit fires 18.222 times
- * per second.
+/**
+ *  \brief The PIT handler that is called when the PIT creates an interrupt.
+ *  
+ *  \param [in] regs The register of the CPU when the interrupt was called
  */
 void pit_handler(regs_t * regs) {
-	(void) regs;
-	// Increment tick count
-	pit_ticks++;
+	(void) regs;		// Not using the registers
+	pit_ticks++;		// Increment tick count
 }
 
-uint32_t get_pit_ticks() {
+uint32_t get_pit_ticks(void) {
 	return pit_ticks;
 }
 
-// Sets up the system clock by installing the timer handler into IRQ0
-void pit_install() {
-	// Initialise the ticks to zero
-	pit_ticks = 0;
-	
-	// Installs 'pit_handler' to IRQ0
-	irq_install_handler(0, pit_handler);
+uint16_t get_pit_divisor(void) {
+	return divisor;
 }
 
-// This will continuously loop until the given time has been reached
+void pit_install(void) {
+	// Set up counter 0 at 100hz in a square wave mode counting in binary
+	pit_setup_counter(100, PIT_OCW_SELECT_COUNTER_0, PIT_OCW_MODE_SQUARE_WAVE_GENERATOR | PIT_OCW_BINARY_COUNT_BINARY);
+	
+	// Installs 'pit_handler' to IRQ0 (PIC_IRQ_TIMER)
+	irq_install_handler(PIC_IRQ_TIMER, pit_handler);
+}
+
 void pit_wait(int tick) {
-	uint32_t eticks = pit_ticks + tick; //(sec * 18);
+	uint32_t eticks = pit_ticks + tick;
 	while(pit_ticks < eticks) {
 		__asm__ __volatile__ ("sti");
 		__asm__ __volatile__ ("hlt");

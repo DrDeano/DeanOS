@@ -22,39 +22,37 @@ extern void _irq13();
 extern void _irq14();
 extern void _irq15();
 
+/**
+ *  The list of handlers for each IRQ
+ */
 static irq_handler irq_handlers[IRQ_TOTAL] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0
 };
 
-// This installs a custom IRQ handler for the given IRQ
-void irq_install_handler(int irq, irq_handler handler) {
-	irq_handlers[irq] = handler;
-	kprintf("IRQ Handle for %u installed\n", irq);
+void irq_install_handler(int irq_num, irq_handler handler) {
+	irq_handlers[irq_num] = handler;
+	kprintf("IRQ Handle for %u installed\n", irq_num);
 }
 
-// This clears the handler for a given IRQ
-void irq_uninstall_handler(int irq) {
-	irq_handlers[irq] = 0;
-	kprintf("IRQ Handle for %u uninstalled\n", irq);
+void irq_uninstall_handler(int irq_num) {
+	irq_handlers[irq_num] = 0;
+	kprintf("IRQ Handle for %u uninstalled\n", irq_num);
 }
-
-/* Each of the IRQ ISRs point to this function, rather than
- * the 'fault_handler' in 'isrs.c'. The IRQ Controllers need
- * to be told when you are done servicing them, so you need
- * to send them an "End of Interrupt" command (0x20). There
- * are two 8259 chips: The first exists at 0x20, the second
- * exists at 0xA0. If the second controller (an IRQ from 8 to
- * 15) gets an interrupt, you need to acknowledge the
- * interrupt at BOTH controllers, otherwise, you only send
- * an EOI command to the first controller. If you don't send
- * an EOI, you won't raise any more IRQs
+ 
+/**
+ *  \brief Each of the IRQ ISR's point to this function, rather than
+ *  the 'fault_handler' in 'isr.c'. The IRQ Controllers need
+ *  to be told when you are done servicing them, so you need
+ *  to send them an "End of Interrupt" command (0x20).
+ *  
+ *  \param [in] regs The registers
  */
 void _irq_handler(regs_t * regs) {
-	uint8_t irq = regs->int_num - 32;
+	uint8_t irq_num = regs->int_num - 32;
 	
 	// Get the handler
-	irq_handler handler = irq_handlers[irq];
+	irq_handler handler = irq_handlers[irq_num];
 
 	// Run the handler if got one
 	if (handler) {
@@ -62,16 +60,13 @@ void _irq_handler(regs_t * regs) {
 	}
 	
 	// Send the end of interrupt command
-	pic_send_end_of_interrupt(irq);
+	pic_send_end_of_interrupt(irq_num);
 }
 
-/* We first remap the interrupt controllers, and then we install
- * the appropriate ISRs to the correct entries in the IDT. This
- * is just like installing the exception handlers
- */
-void irq_init() {
+void irq_init(void) {
 	kprintf("Initialising interrupt requests\n");
-
+	
+	// Remap the PIC IRQ so not to overlap with other exceptions
 	pic_remap_irq();
 
 	idt_open_interrupt_gate(32, (uintptr_t) &_irq00);

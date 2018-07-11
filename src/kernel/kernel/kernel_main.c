@@ -22,10 +22,6 @@
 #include <rtc.h>
 #include <speaker.h>
 
-//#if defined(__linux__)
-//#error "You are not using a cross-compiler, you will most certainly run into trouble"
-//#endif
-
 #if !defined(__i386__)
 #error "This needs to be compiled with a ix86-elf compiler"
 #endif
@@ -71,11 +67,11 @@ noreturn void panic(const char * format, ...) {
  *  
  *  \todo Set daylight_savings correctly
  */
-static void human_clock_init() {
+static void human_clock_init(void) {
 	daylight_savings = true;
 }
 
-static void display_time() {
+static void display_time(void) {
 	static char * str_day[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 	rtc_date_time_t date;
 	get_time(&date);
@@ -89,7 +85,7 @@ static void add_command(char * cmd) {
 	prev_command_buffer_index = prev_command_buffer_end;
 }
 
-static char * get_prev_cmd() {
+static char * get_prev_cmd(void) {
 	int count = 10;
 	int save_index = prev_command_buffer_index;
 	if(prev_command_buffer_index == 0) {
@@ -120,26 +116,26 @@ static char * get_prev_cmd() {
 	return prev_command_buffer[prev_command_buffer_index];
 }
 
-static void zero_cmd_buffer() {
+static void zero_cmd_buffer(void) {
 	memset(command_buffer, 0, sizeof(command_buffer));
 	command_buffer_index = 0;
 }
 
-static void move_left() {
+static void move_left(void) {
 	if(command_buffer_index) {
 		move_cursor_left();
 		command_buffer_index--;
 	}
 }
 
-static void move_right() {
+static void move_right(void) {
 	if(command_buffer[command_buffer_index] != '\0') {
 		move_cursor_right();
 		command_buffer_index++;
 	}
 }
 
-static void clear_line() {
+static void clear_line(void) {
 	//int temp = command_buffer_index;
 	
 	// Start from the end
@@ -212,7 +208,7 @@ static void add_char_to_cmd(char c) {
 	}
 }
 
-static char * get_next_cmd() {
+static char * get_next_cmd(void) {
 	if(prev_command_buffer_index == prev_command_buffer_end) {
 		return prev_command_buffer[prev_command_buffer_index];
 	}
@@ -225,7 +221,7 @@ static char * get_next_cmd() {
 	return prev_command_buffer[prev_command_buffer_index];
 }
 
-static void kernel_task() {
+static void kernel_task(void) {
 	char * prev_cmd;
 	
 	const char * list_of_commands[] = {
@@ -264,7 +260,7 @@ static void kernel_task() {
 				
 				case KEYBOARD_KEY_F1:
 					//kprintf("F1\n");
-					memcpy(command_buffer, "help", 4);
+					memcpy(command_buffer, "help", 5);
 					//command_buffer_index += 5;
 					key = KEYBOARD_KEY_ENTER;
 					break;
@@ -466,10 +462,11 @@ static void kernel_task() {
 			kprintf("Hello there\n");
 		} else if (strcmp(command_buffer, "uptime") == 0) {
 			unsigned int ticks = get_pit_ticks();
-			unsigned int sec = (ticks / 18) % 60;
-			unsigned int min = (ticks / (18 * 60)) % 60;
-			unsigned int hr = (ticks / (18 * 60 * 60)) % 24;
-			unsigned int day = (ticks / (18 * 60 * 60 * 24)) % 365;
+			unsigned int div = get_pit_divisor();
+			unsigned int sec = (ticks / div) % 60;
+			unsigned int min = (ticks / (div * 60)) % 60;
+			unsigned int hr = (ticks / (div * 60 * 60)) % 24;
+			unsigned int day = (ticks / (div * 60 * 60 * 24)) % 365;
 			kprintf("%d ticks: day:hr:min:sec %3d:%02d:%02d:%02d\n", ticks, day, hr, min, sec);
 		} else if(strcmp(command_buffer, "eg") == 0) {
 			kprintf("Soph is a butt\n");
@@ -497,8 +494,8 @@ static void kernel_task() {
 }
 
 noreturn void kernel_main(void) {
-	// Get the parameters from the bootloader. The curser position
-	struct boot_params * params = get_boot_params(ADDRESS);
+	// Get the parameters from the bootloader. The cursor position
+	boot_params * params = get_boot_params(ADDRESS);
 	
 	/* Initialize terminal interface */
 	terminal_initialise(params);
@@ -518,8 +515,6 @@ noreturn void kernel_main(void) {
 	rtc_init();
 	
 	interrupt_enable();
-	
-	//interrupt_init();
 	
 	human_clock_init();
 	

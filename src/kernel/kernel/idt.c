@@ -5,14 +5,34 @@
 #include <idt.h>
 #include <gdt.h>
 
+/**
+ *  The IDT entries.
+ */
 static idt_entry_t idt_entries[IDT_ENTRIES];
+
+/**
+ *  The IDT pointer.
+ */
 static idt_ptr_t idt_ptr;
 
-inline static void _idt_load(idt_ptr_t * ptr) {
-	__asm__ __volatile__ ("lidt [eax]" : : "a" (ptr));
+/**
+ *  \brief Inline assembly for loading the IDT into the CPU.
+ */
+static inline void lidt(void) {
+	__asm__ __volatile__ ("lidt [eax]" : : "a" (&idt_ptr));
 }
 
-static void idt_set_entry(uint8_t index, uintptr_t base, uint16_t selector, uint8_t flags /*uint8_t type, uint8_t privilege, bool present*/) {
+/**
+ *  \brief Create a IDT entry with values given
+ *  
+ *  \param [in] index     The index into the IDT
+ *  \param [in] base      The base address of the interrupt to be loaded into the IDT.
+ *  \param [in] selector  The selector.
+ *  \param [in] type      The gate type for the interrupt.
+ *  \param [in] privilege The ring level of the interrupt that can be run at.
+ *  \param [in] present   Whether the interrupt entry is present.
+ */
+static void idt_set_entry(uint8_t index, uintptr_t base, uint16_t selector, uint8_t type, uint8_t privilege, bool present) {
 	// Set up base address
 	idt_entries[index].base_low = base & 0xFFFF;
 	idt_entries[index].base_high = (base >> 16) & 0xFFFF;
@@ -24,33 +44,36 @@ static void idt_set_entry(uint8_t index, uintptr_t base, uint16_t selector, uint
 	idt_entries[index].zero = 0;
 	
 	// Set up flags
-	//idt_entries[index].idt_gate_type = type;
-	//idt_entries[index].storage_segment = false;
-	//idt_entries[index].privilege = privilege;
-	//idt_entries[index].present = present;
-	idt_entries[index].flags = flags;
+	idt_entries[index].idt_gate_type = type;
+	idt_entries[index].storage_segment = false;
+	idt_entries[index].privilege = privilege;
+	idt_entries[index].present = present;
+	//idt_entries[index].flags = flags;
 }
 
-static void idt_load() {
+/**
+ *  \brief Create the IDT pointer and load it into the CPU.
+ */
+static void idt_load(void) {
 	// Create the pointer to the table
     idt_ptr.size = IDT_SIZE - 1;
-    idt_ptr.offset = idt_entries;
+    idt_ptr.base_addr = idt_entries;
 
     // Points the processor's internal register to the new IDT
-    _idt_load(&idt_ptr);
+    lidt();
 }
 
 void idt_open_interrupt_gate(uint8_t index, uintptr_t base) {
     // Open an interrupt gate
-    idt_set_entry(index, base, GDT_KERNEL_CODE_OFFSET, 0x8E/*IDT_INTERRUPT_GATE, GDT_PRIVILEGE_KERNEL, true*/);
+    idt_set_entry(index, base, GDT_KERNEL_CODE_OFFSET, /*0x8E*/IDT_INTERRUPT_GATE, GDT_PRIVILEGE_RING_0, true);
 }
 
 void idt_close_interrupt_gate(uint8_t index) {
     // Close an interrupt gate
-    idt_set_entry(index, 0, 0, 0);
+    idt_set_entry(index, 0, 0, 0, 0, false);
 }
 
-void idt_init() {
+void idt_init(void) {
     // Clear out the entire IDT, initializing it to zeros
 	kprintf("Initialising IDT at 0x%p\n", idt_entries);
     memset(idt_entries, 0, IDT_SIZE);

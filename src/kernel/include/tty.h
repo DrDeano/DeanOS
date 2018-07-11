@@ -34,7 +34,7 @@ void clear();
  *  and the cursor starts at (0, 0) at the top left corner of the display. If there are parameters
  *  provided, then the display continues from where the bootloader left off.
  */
-void terminal_initialise(struct boot_params * params);
+void terminal_initialise(boot_params * params);
 
 /**
  *  \brief Print a character to the display

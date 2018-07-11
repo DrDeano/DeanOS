@@ -1,8 +1,15 @@
+/**
+ *  \file keyboard.h
+ *  \brief The keyboard driver.
+ */
 #ifndef INCLUDE_KEYBOARD_H
 #define INCLUDE_KEYBOARD_H
 
 #include <stdint.h>
 
+/**
+ *  \brief The collection of all (I think) keys on a keyboard. Including multimedia keys.
+ */
 enum {
 	KEYBOARD_KEY_A = 0x00,
     KEYBOARD_KEY_B,

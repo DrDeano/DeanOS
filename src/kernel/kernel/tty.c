@@ -189,7 +189,7 @@ void terminal_write_string(const char * str) {
 	terminal_write(str, strlen(str));
 }
 
-void terminal_initialise(struct boot_params * params) {
+void terminal_initialise(boot_params * params) {
 	size_t row_offset = 0;
 	terminal_colour = vga_entry_colour(VGA_COLOUR_LIGHT_GREY, VGA_COLOUR_BLACK);
 	terminal_buffer = VGA_MEMORY;

@@ -33,12 +33,15 @@ static inline uint8_t in_port_byte(uint16_t port) {
     return ret;
 }
 
+/**
+ *  \brief A simple way of waiting for I/O event to happen by doing an I/O event to flush the I/O
+ *  event being waited.
+ */
 static inline void io_wait() {
     /* Port 0x80 is used for 'checkpoints' during POST. */
     /* The Linux kernel seems to think it is free for use */
     //__asm__ __volatile__ ("outb %%al, $0x80" : : "a"(0));
 	out_port_byte(0x80, 0);
-    /* %%al instead of %0 makes no difference.  TODO: does the register need to be zeroed? */
 }
 
 #endif /* INCLUDE_PORTIO_H */

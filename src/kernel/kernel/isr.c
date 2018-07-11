@@ -38,6 +38,10 @@ extern void _isr29();
 extern void _isr30();
 extern void _isr31();
 
+/**
+ *  A list of string that say what exception has been raised so can be printed to the user so that
+ *  they know what happened.
+ */
 static char * exception_msg[] = {
 	"Divide By Zero",
 	"Single Step (Debugger)",
@@ -73,6 +77,9 @@ static char * exception_msg[] = {
 	"Reserved"
 };
 
+/**
+ *  The list of handlers for each exception
+ */
 static isr_handler isr_handlers[ISR_TOTAL] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0,
@@ -80,6 +87,12 @@ static isr_handler isr_handlers[ISR_TOTAL] = {
 	0, 0, 0, 0, 0, 0, 0, 0
 };
 
+/**
+ *  \brief The main handler that is called when a exception is raises. It then calls the
+ *  appropriate handler for the exception if one is present.
+ *  
+ *  \param [in] regs The registers
+ */
 void _fault_handler(regs_t * regs) {
 	// Get the handler
 	isr_handler handler = isr_handlers[regs->int_num];
@@ -103,7 +116,7 @@ void isr_uninstall_handler(uint8_t isr_num) {
 }
 
 void isr_init() {
-    kprintf("Initialising iterrupt service routines\n");
+    kprintf("Initialising interrupt service routines\n");
 	idt_open_interrupt_gate(0, (uintptr_t) &_isr00);
 	idt_open_interrupt_gate(1, (uintptr_t) &_isr01);
 	idt_open_interrupt_gate(2, (uintptr_t) &_isr02);
