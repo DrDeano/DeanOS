@@ -1,6 +1,6 @@
 /**
  *  \file stdio.h
- *  \brief C Library stdio
+ *  \brief The C Library: stdio
  */
 #ifndef _STDIO_H
 #define _STDIO_H 1

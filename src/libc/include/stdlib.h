@@ -1,6 +1,6 @@
 /**
  *  \file stdlib.h
- *  \brief The C library stdlib
+ *  \brief The C library: stdlib
  */
 #ifndef _STDLIB_H
 #define _STDLIB_H 1

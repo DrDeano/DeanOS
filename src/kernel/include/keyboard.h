@@ -153,13 +153,10 @@ enum {
 	KEYBOARD_KEY_UNKNOWN
 };
 
-// PS/2 commands
-#define PS2_DATA_PORT		0x60
-#define PS2_COMMAND_PORT	0x64
-
-#define PS2_STATUS_INPUT_BUFFER_FULL	0x02
-
 // Keyboard commands
+/**
+ *  The port address for setting the keyboard status lights.
+ */
 #define KEYBOARD_SET_LED	0xED
 
 // Response Codes
@@ -308,8 +305,26 @@ enum {
 #define KEYBOARD_KEY_TILDE					0x7E
 #define KEYBOARD_KEY_DEL					0x7F
 */
-void keyboard_init();
-unsigned char get_last_key_press();
+
+/**
+ *  \brief Given a keyboard key, return the ASCII value of the key.
+ *  
+ *  \param [in] key The keyboard key to be translated.
+ *  \return The ASCII value of the keyboard key.
+ */
 char key_to_ascii(unsigned char key);
+
+/**
+ *  \brief Get the last key that was pressed. This resets the last key pressed to
+ *  KEYBOARD_KEY_UNKNOWN.
+ *  
+ *  \return The last key thats was pressed.
+ */
+unsigned char get_last_key_press(void);
+
+/**
+ *  \brief Initiate the keyboard driver to accept key presses and handle them.
+ */
+void keyboard_init(void);
 
 #endif /* INCLUDE_KEYBOARD_H */

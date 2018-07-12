@@ -8,19 +8,29 @@
 #include <portio.h>
 #include <rtc.h>
 
-static size_t terminal_column;								/**< The current x position of the cursor */
-static size_t terminal_row;									/**< The current y position of the cursor */
-static uint8_t terminal_colour;								/**< The current colour of the display with forground and background colour */
-static uint16_t * terminal_buffer;							/**< The buffer starting from the beginning of the video memory
-																 locaiton that contains all data writen to the display */
-rtc_date_time_t on_screen_time;
+static size_t terminal_column;			/**< The current x position of the cursor. */
+static size_t terminal_row;				/**< The current y position of the cursor. */
+static uint8_t terminal_colour;			/**< The current colour of the display with foreground and background colour. */
+static uint16_t * terminal_buffer;		/**< The buffer starting from the beginning of the video memory location that contains all data written to the display. */
+static rtc_date_time_t on_screen_time;	/**< The display time that is displayed under the logo. */
 
-static void terminal_put_entry_at(unsigned char c, uint8_t colour, size_t x, size_t y) {
+/**
+ *  \brief Take a character and a x/y position and put it into the video memory so that it is
+ *  displayed on the screen.
+ *  
+ *  \param [in] c The character to be displayed.
+ *  \param [in] x The x position on the screen.
+ *  \param [in] y The y position on the screen.
+ */
+static void terminal_put_entry_at(unsigned char c, size_t x, size_t y) {
 	const size_t index = y * VGA_WIDTH + x;
-	terminal_buffer[index] = vga_entry(c, colour);
+	terminal_buffer[index] = vga_entry(c, terminal_colour);
 }
 
-static void update_cursor() {
+/**
+ *  \brief Update the cursor position to the end of the current line or character printed.
+ */
+static void update_cursor(void) {
 	const uint16_t pos = terminal_row * VGA_WIDTH + terminal_column;
 	
 	out_port_byte(VGA_PORT_CRTC_ADDRESS, VGA_REG_CURSOR_LOCATION_LOW);
@@ -30,7 +40,11 @@ static void update_cursor() {
 	out_port_byte(VGA_PORT_CRTC_DATA, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
-static void terminal_scroll() {
+/**
+ *  \brief When the text/terminal gets to the bottom of the screen, then move all line up by the
+ *  amount that are below the bottom of the screen. Usually moves up by one line.
+ */
+static void terminal_scroll(void) {
 	// If at the end of the screen, scroll
 	size_t temp;
 	if(terminal_row >= 25) {
@@ -41,13 +55,18 @@ static void terminal_scroll() {
 		
 		// Set the last row to blanks
 		for(int i = 0; i < 80; i++) {
-			terminal_put_entry_at('\0', terminal_colour, i, 24);
+			terminal_put_entry_at('\0', i, 24);
 		}
 		terminal_row = 25 - 1;
-		
 	}
 }
 
+/**
+ *  \brief The internal function to print a character without updating the cursor. For speed when
+ *  printing a string as only need to update the cursor once.
+ *  
+ *  \param [in] c The character to print
+ */
 static void _terminal_put_char(char c) {
 	unsigned char uc = c;
 	
@@ -78,7 +97,7 @@ static void _terminal_put_char(char c) {
 			break;
 			
 		default:
-			terminal_put_entry_at(uc, terminal_colour, terminal_column, terminal_row);
+			terminal_put_entry_at(uc, terminal_column, terminal_row);
 			if (++terminal_column == VGA_WIDTH) {
 				terminal_column = 0;
 				terminal_row++;
@@ -88,7 +107,10 @@ static void _terminal_put_char(char c) {
 	}
 }
 
-static void print_logo() {
+/**
+ *  \brief Print the DeanOS logo to the top of the screen.
+ */
+static void print_logo(void) {
 	size_t column_temp = terminal_column;
 	size_t row_temp = terminal_row;
 	
@@ -107,7 +129,7 @@ static void print_logo() {
 	update_cursor();
 }
 
-void clear() {
+void clear(void) {
 	for (size_t y = TERMINAL_ROW_MIN; y < VGA_HEIGHT; y++) {
 		for (size_t x = 0; x < VGA_WIDTH; x++) {
 			const size_t index = y * VGA_WIDTH + x;
@@ -119,7 +141,7 @@ void clear() {
 	update_cursor();
 }
 
-void move_cursor_left() {
+void move_cursor_left(void) {
 	if(terminal_column == 0) {
 		if(terminal_row != 0) {
 			terminal_column = VGA_HEIGHT - 1;
@@ -131,7 +153,7 @@ void move_cursor_left() {
 	update_cursor();
 }
 
-void move_cursor_right() {
+void move_cursor_right(void) {
 	if(terminal_column == (VGA_HEIGHT - 1)) {
 		if(terminal_row != (VGA_WIDTH - 1)) {
 			terminal_column = 0;
@@ -143,7 +165,7 @@ void move_cursor_right() {
 	update_cursor();
 }
 
-void set_display_time() {
+void set_display_time(void) {
 	// Time is on line 7
 	static char * str_day[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 	size_t column_temp = terminal_column;
@@ -212,7 +234,7 @@ void terminal_initialise(boot_params * params) {
 		// Set the top 7 rows blank
 		for(int j = 0; j < TERMINAL_ROW_MIN; j++) {
 			for(int i = 0; i < 80; i++) {
-				terminal_put_entry_at(' ', terminal_colour, i, j);
+				terminal_put_entry_at(' ', i, j);
 			}
 		}
 		

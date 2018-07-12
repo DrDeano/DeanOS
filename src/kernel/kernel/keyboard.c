@@ -1,22 +1,66 @@
 #include <keyboard.h>
+#include <ps2.h>
+#include <pic.h>
 #include <regs_t.h>
 #include <stdio.h>
 #include <irq.h>
 #include <portio.h>
+
 #include <stdbool.h>
 
+/**
+ *  A structure for storing the key, its ASCII value, (if has one), and the upper case ASCII value
+ * (if has one). If hasn't got an upper case ASCII value, then is the same as the lower case value.
+ */
+typedef struct {
+    const uint8_t key;
+    const unsigned char ascii;
+    const unsigned char shift_ascii;
+} key_mapping;
+
+/**
+ *  The last key that was pressed. Then is reset to KEYBOARD_KEY_UNKNOWN once accessed.
+ */
 static unsigned char last_key_press;
 
+/**
+ *  Is the shift key pressed.
+ */
 static bool shift_pressed;
+
+/**
+ *  Is the control key pressed.
+ */
 static bool ctrl_pressed;
+
+/**
+ *  Is the alt key pressed.
+ */
 static bool alt_pressed;
 
+/**
+ *  Is the caps lock on.
+ */
 static bool caps_lock_toggle;
+
+/**
+ *  Is the number lock on.
+ */
 static bool num_lock_toggle;
+
+/**
+ *  Is the scroll lock on.
+ */
 static bool scroll_lock_toggle;
 
+/**
+ *  Is the key being pressed part of the extended range of scan codes.
+ */
 static bool is_extended;
 
+/**
+ *  The key map of set 1 of scan codes.
+ */
 unsigned char keymap[256] = {
 	KEYBOARD_KEY_UNKNOWN,
 	KEYBOARD_KEY_ESC,
@@ -260,13 +304,10 @@ unsigned char keymap[256] = {
 	KEYBOARD_KEY_MULTIMEDIA_MEDIA_SELECT	// 0xE0 0x6D
 };
 
-struct key_mapping {
-    const uint8_t key;
-    const unsigned char ascii;
-    const unsigned char shift_ascii;
-};
-
-const struct key_mapping key_to_ascii_map[] = {
+/**
+ *  The array of scan code to ASCII key map.
+ */
+static const key_mapping key_to_ascii_map[] = {
     // Letters.
     [KEYBOARD_KEY_A] = { KEYBOARD_KEY_A, 'a', 'A' },
     [KEYBOARD_KEY_B] = { KEYBOARD_KEY_B, 'b', 'B' },
@@ -343,38 +384,36 @@ const struct key_mapping key_to_ascii_map[] = {
     [KEYBOARD_KEY_NUM_FULL_STOP]	= { KEYBOARD_KEY_NUM_FULL_STOP, 'D', '.' },
 };
 
-static void ps2_wait_send() {
-	uint32_t timeout = 1000000;
-	while(timeout--) {
-		if ((in_port_byte(PS2_COMMAND_PORT) & PS2_STATUS_INPUT_BUFFER_FULL) == 0) {
-			return;
-		}
-	}
-}
-
-static void ps2_send_command(uint8_t cmd) {
-	ps2_wait_send();
-	out_port_byte(PS2_COMMAND_PORT, cmd);
-}
-
+/**
+ *  \brief Set the keyboard caps, num and scroll lock lights depending whether the keys have been
+ *  pressed/toggled.
+ *  
+ *  \param [in] scroll_lock Whether the scroll lock is on.
+ *  \param [in] num_lock    Whether the number lock is on.
+ *  \param [in] caps_lock   Whether the caps lock is on.
+ */
 static void set_keyboard_lights(bool scroll_lock, bool num_lock, bool caps_lock) {
 	uint8_t data = (scroll_lock << 3) | (num_lock << 2) | caps_lock;
 	ps2_send_command(KEYBOARD_SET_LED);
 	ps2_send_command(data);
 }
 
+/**
+ *  \brief The IRQ handler for the keyboard that reads the scan code from the keyboards buffer and
+ *  translates it into a key press or release. A held down key will generate repeated interrupts.
+ *  
+ *  \param [in] regs The register of the handler.
+ */
 void keyboard_handler(regs_t * regs) {
-	(void) regs;
+	(void) regs;				// Registers aren't needed.
 	
 	unsigned char scancode;
 	unsigned char key_pressed;
 
-    /* Read from the keyboard's data buffer */
+    // Read from the keyboard's data buffer
 	scancode = in_port_byte(0x60);
 	
-	
-	
-	// Handle extended codes for home, insert, ...
+	// Handle extended codes for home, insert, end, ...
 	// https://wiki.osdev.org/PS/2_Keyboard
 	if (scancode == 0xe0 || scancode == 0xe1) {
 		is_extended = true;
@@ -382,7 +421,6 @@ void keyboard_handler(regs_t * regs) {
 	}
 	
 	if (is_extended) {
-		//kprintf("KEYBOARD: hex: 0x%x\n", (int) (scancode & ~0x80) + 0x59);
 		key_pressed = keymap[(scancode & ~0x80) + 0x59];
 	} else {
 		key_pressed = keymap[(scancode & ~0x80)];
@@ -390,11 +428,8 @@ void keyboard_handler(regs_t * regs) {
 	
 	is_extended = false;
 
-    /* If the top bit of the byte we read from the keyboard is
-    *  set, that means that a key has just been released */
+    // If the top bit of the byte we read from the keyboard is set, then the key has just been released
 	if (scancode & 0x80) {
-        /* You can use this one to see if the user released the
-        *  shift, alt, or control keys... */
         switch (key_pressed) {
 			case KEYBOARD_KEY_LEFT_SHIFT:
 			case KEYBOARD_KEY_RIGHT_SHIFT:
@@ -448,24 +483,21 @@ void keyboard_handler(regs_t * regs) {
 		}
 		
 		last_key_press = key_pressed;
-        /* Here, a key was just pressed. Please note that if you
-        *  hold a key down, you will get repeated key press
-        *  interrupts. */
-        
-		//kputchar(keymap_US[scancode]);
-		
 	}
 }
 
 char key_to_ascii(unsigned char key) {
+	// Has the key got a ASCII value
 	if(key > KEYBOARD_KEY_NUM_FULL_STOP) {
 		return 0;
 	}
 	
+	// If shift key is held, then return the upper ASCII value
 	if(shift_pressed) {
 		return key_to_ascii_map[key].shift_ascii;
 	}
 	
+	// Else return the lower case ASCII value.
 	return key_to_ascii_map[key].ascii;
 }
 
@@ -489,5 +521,5 @@ void keyboard_init() {
 	
 	is_extended = false;
 	
-	irq_install_handler(1, keyboard_handler);
+	irq_install_handler(PIC_IRQ_KEYBOARD, keyboard_handler);
 }
