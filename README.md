@@ -1,10 +1,9 @@
 # DeanOS
-Creating an operating system from scratch
+Creating an operating system from scratch. This operating system is build for i386+ 32bit Intel x86. Any other platforms may not work and haven't been tested on.
 
 ## How to run
 Just type `make run` which will create all the files needed and run in the qemu emulator.
 The makefile is a shambles, so any suggestions on better makefiles are appreciated.
-
 
 ## Prerequisite
 * `nasm` - For assembling the bootloader
@@ -33,3 +32,6 @@ c
 This will set the architecture to 16 bit x86 as this is what the bootloader is coded in to start with. Then connects to the emulator on port 1234 (default for qemu). Then sets a break point at the beginning of the bootloader. The starts the OS and stops at the beginning of the bootloader.
 
 If want to break at the beginning of the kernel, the address it is loaded at is 0x100000. So replace `br *0x7c00` with `br *0x100000`.
+
+## WARNING
+You run my operating system at you own risk on real hardware. There is no guarantee that hardware won't be damaged by running the OS. So run in a virtual machine or emulator for safety.
