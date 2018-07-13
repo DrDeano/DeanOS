@@ -6,6 +6,81 @@
 #define INCLUDE_KEYBOARD_H
 
 #include <stdint.h>
+#include <stdbool.h>
+
+/**
+ *  \brief The port address for reading the input buffer from the keyboard encoder.
+ */
+#define KEYBOARD_ENCODER_READ_INPUT_BUFFER			0x60
+
+/**
+ *  \brief The port address for sending a command to the keyboard encoder.
+ */
+#define KEYBOARD_ENCODER_SEND_COMMAND				0x60
+
+/**
+ *  \brief The port address for reading the status register of the keyboard controller.
+ */
+#define KEYBOARD_CONTROLLER_READ_STATUS_REGISTER	0x64
+
+/**
+ *  \brief The port address for sending a command to the keyboard controller.
+ */
+#define KEYBOARD_CONTROLLER_SEND_COMMAND			0x64
+
+// --------------------------
+// Status register bit masks.
+// --------------------------
+
+/**
+ *  \brief Whether the output buffer is full. If set, then the buffer is full so can be read. If
+ *  not set, then the buffer isn't full and shouldn't be read.
+ */
+#define KEYBOARD_STATUS_REGISTER_OUTPUT_BUFFER_MASK		0x01	// xxxxxxx1
+
+/**
+ *  \brief Whether the input buffer is full. If set, then the buffer is full so don't write
+ *  anything yet. If not set, then  the buffer isn't full and can be written to.
+ */
+#define KEYBOARD_STATUS_REGISTER_INPUT_BUFFER_MASK		0x02	// xxxxxx1x
+
+/**
+ *  \brief The system flag that is set when a successful keyboard controller self test is
+ *  completed. Is unset after a power on reset.
+ */
+#define KEYBOARD_STATUS_REGISTER_SYSTEM_FLAGS_MASK		0x04	// xxxxx1xx
+
+/**
+ *  \brief A flag saying whether the input buffer was data (via port 0x60) or a command (via port
+ *  0x64). If set, then was date, else is a command.
+ */
+#define KEYBOARD_STATUS_REGISTER_COMMAND_DATA_MASK		0x08	// xxxx1xxx
+
+/**
+ *  \brief Set if the keyboard is unlocked. If unset, then the keyboard is locked.
+ */
+#define KEYBOARD_STATUS_REGISTER_KEYBOARD_LOCK_MASK		0x10	// xxx1xxxx
+
+/**
+ *  \brief Whether the auxiliary output buffer is full. This also depends on the mode the
+ *  controller is operating in. For PS/2 systems: if set, then is mouse data if you can read
+ *  from \ref KEYBOARD_READ_INPUT_BUFFER_KE. If unset, then determines if read form port 0x60 is valid
+ *  if value is 0. For AT systems: If set the the OK flag. If unset, then timeout o transmission
+ *  from controller to keyboard. May indicate that no keyboard is present.
+ */
+#define KEYBOARD_STATUS_REGISTER_AUX_OUTPUT_BUFFER_MASK	0x20	// xx1xxxxx
+
+/**
+ *  \brief If set, then a timeout occurred. If not set, then is a OK flag. For a PS/2 system, it is
+ *  a general timeout, for a AT system, it is a timeout on transmission from keyboard to keyboard
+ *  controller, possibly parity error.
+ */
+#define KEYBOARD_STATUS_REGISTER_TIMEOUT_MASK			0x40	// x1xxxxxx
+
+/**
+ *  \brief If set, then there was a parity error with the last byte. If not set, then no error.
+ */
+#define KEYBOARD_STATUS_REGISTER_PARITY_ERROR_MASK		0x80	// 1xxxxxxx
 
 /**
  *  \brief The collection of all (I think) keys on a keyboard. Including multimedia keys.
@@ -153,158 +228,462 @@ enum {
 	KEYBOARD_KEY_UNKNOWN
 };
 
-// Keyboard commands
+// ------------------
+// Keyboard commands.
+// ------------------
+
 /**
- *  The port address for setting the keyboard status lights.
+ *  \brief The command for setting the keyboard status lights for the scroll, number and caps lock.
+ *  Bit 0: Scroll lock (0: off, 1:on).
+ *  Bit 1: Number lock (0: off, 1:on).
+ *  Bit 2: Caps   lock (0: off, 1:on).
  */
-#define KEYBOARD_SET_LED	0xED
+#define KEYBOARD_ENCODER_COMMAND_SET_LED				0xED
 
-// Response Codes
-#define KEYBOARD_ACK		0xFA
-#define KEYBOARD_RESEND		0xFE
+/**
+ *  \brief This echo's back the same command, 0xEE to \ref KEYBOARD_ENCODER_READ_INPUT_BUFFER.
+ *  Usually used for testing.
+ */
+#define KEYBOARD_ENCODER_COMMAND_ECHO					0xEE
 
-/*
-#define KEYBOARD_KEY_NULL					0x00
+/**
+ *  \brief The command for setting a scan code set. The next byte written will be the scan code
+ *  set. This must be written to \ref KEYBOARD_ENCODER_SEND_COMMAND. The format for the scan code
+ *  set are as follows:
+ *  Bit 0: Returns the current scan code set in the input buffer, \ref KEYBOARD_ENCODER_READ_INPUT_BUFFER.
+ *  Bit 1: Sets scan code set 1.
+ *  Bit 2: Sets scan code set 2.
+ *  Bit 3: Sets scan code set 3.
+ *  All other bits must be zero.
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_SCAN_CODE_SET		0xF0
 
-#define KEYBOARD_KEY_SOH					0x01
-#define KEYBOARD_KEY_STX					0x02
-#define KEYBOARD_KEY_ETX					0x03
-#define KEYBOARD_KEY_EOT					0x04
-#define KEYBOARD_KEY_ENQ					0x05
-#define KEYBOARD_KEY_ACK					0x06
-#define KEYBOARD_KEY_BEL					0x07
+// -------------------
+// Set scan code bits.
+// -------------------
 
-#define KEYBOARD_KEY_BACKSPACE				0x08
-#define KEYBOARD_KEY_TAB					0x09
-#define KEYBOARD_KEY_LINE_FEED				0x0A
+/**
+ *  \brief The bit for getting the current scan code set.
+ */
+#define GET_CURRENT_SCAN_CODE_SET	0x01	// 00000001
 
-#define KEYBOARD_KEY_VTAB					0x0B
-#define KEYBOARD_KEY_FORM_FEED				0x0C
+/**
+ *  \brief The bit for setting scan code set 1.
+ */
+#define SET_SCAN_CODE_SET_1			0x02	// 00000010
 
-#define KEYBOARD_KEY_CARRIAGE_RETURN		0x0D
+/**
+ *  \brief The bit for setting scan code set 2.
+ */
+#define SET_SCAN_CODE_SET_2			0x04	// 00000100
 
-#define KEYBOARD_KEY_SO						0x0E
-#define KEYBOARD_KEY_SI						0x0F
-	
-#define KEYBOARD_KEY_DLE					0x10
-#define KEYBOARD_KEY_DC1					0x11
-#define KEYBOARD_KEY_DC2					0x12
-#define KEYBOARD_KEY_DC3					0x13
-#define KEYBOARD_KEY_DC4					0x14
-#define KEYBOARD_KEY_NAK					0x15
-#define KEYBOARD_KEY_SYN					0x16
-#define KEYBOARD_KEY_ETB					0x17
-#define KEYBOARD_KEY_CAN					0x18
-#define KEYBOARD_KEY_EM						0x19
-#define KEYBOARD_KEY_SUB					0x1A
-#define KEYBOARD_KEY_ESC					0x1B
-#define KEYBOARD_KEY_FS						0x1C
-#define KEYBOARD_KEY_GS						0x1D
-#define KEYBOARD_KEY_RS						0x1E
-#define KEYBOARD_KEY_US						0x1F
+/**
+ *  \brief The bit for setting scan code set 3.
+ */
+#define SET_SCAN_CODE_SET_3			0x08	// 00001000
 
-#define KEYBOARD_KEY_SPACE					0x20
-#define KEYBOARD_KEY_EXCLAMATION_MARK		0x21
-#define KEYBOARD_KEY_QUOTATION_MARK			0x22
-#define KEYBOARD_KEY_HASH					0x23
-#define KEYBOARD_KEY_DOLLAR					0x24
-#define KEYBOARD_KEY_PERCENT				0x25
-#define KEYBOARD_KEY_AMPERSAND				0x26
-#define KEYBOARD_KEY_APOSTROPHE				0x27
-#define KEYBOARD_KEY_OPEN_ROUND_BRACKET		0x28
-#define KEYBOARD_KEY_CLOSE_ROUND_BRACKET	0x29
-#define KEYBOARD_KEY_ASTERISK				0x2A
-#define KEYBOARD_KEY_PLUS					0x2B
-#define KEYBOARD_KEY_COMMA					0x2C
-#define KEYBOARD_KEY_MINUS					0x2D
-#define KEYBOARD_KEY_FULL_STOP				0x2E
-#define KEYBOARD_KEY_SLASH					0x2F
+// -------------------
 
-#define KEYBOARD_KEY_0						0x30
-#define KEYBOARD_KEY_1						0x31
-#define KEYBOARD_KEY_2						0x32
-#define KEYBOARD_KEY_3						0x33
-#define KEYBOARD_KEY_4						0x34
-#define KEYBOARD_KEY_5						0x35
-#define KEYBOARD_KEY_6						0x36
-#define KEYBOARD_KEY_7						0x37
-#define KEYBOARD_KEY_8						0x38
-#define KEYBOARD_KEY_9						0x39
-#define KEYBOARD_KEY_COLON					0x3A
-#define KEYBOARD_KEY_SEMICOLON				0x3B
-#define KEYBOARD_KEY_OPEN_ANGLE_BRACKET		0x3C
-#define KEYBOARD_KEY_EQUALS					0x3D
-#define KEYBOARD_KEY_CLOST_ANGLE_BRACKET	0x3E
-#define KEYBOARD_KEY_QUESTION_MARK			0x3F
+/**
+ *  \brief The command for reading the next 2 bytes from \ref KEYBOARD_ENCODER_READ_INPUT_BUFFER as
+ *  the keyboard ID 
+ */
+#define KEYBOARD_ENCODER_COMMAND_READ_KEYBOARD_ID		0xF2
 
-#define KEYBOARD_KEY_AT_SIGN				0x40
-#define KEYBOARD_KEY_A_UPPER				0x41
-#define KEYBOARD_KEY_B_UPPER				0x42
-#define KEYBOARD_KEY_C_UPPER				0x43
-#define KEYBOARD_KEY_D_UPPER				0x44
-#define KEYBOARD_KEY_E_UPPER				0x45
-#define KEYBOARD_KEY_F_UPPER				0x46
-#define KEYBOARD_KEY_G_UPPER				0x47
-#define KEYBOARD_KEY_H_UPPER				0x48
-#define KEYBOARD_KEY_I_UPPER				0x49
-#define KEYBOARD_KEY_J_UPPER				0x4A
-#define KEYBOARD_KEY_K_UPPER				0x4B
-#define KEYBOARD_KEY_L_UPPER				0x4C
-#define KEYBOARD_KEY_M_UPPER				0x4D
-#define KEYBOARD_KEY_N_UPPER				0x4E
-#define KEYBOARD_KEY_O_UPPER				0x4F
+/**
+ *  \brief The command for setting the autorepeat delay and repeat rate. Next byte written to \ref KEYBOARD_ENCODER_SEND_COMMAND has the following format:
+ *  Bits 0 - 4: Repeat rate: 00000 (0x00) - 30 char/sec, 11111 (0x1F) - 2 char/sec.
+ *  Bits 5 - 6: Repeat delay: 00 - 0.25sec, 01 - 0.5sec, 10 - 0.75sec, 11 - 1sec.
+ *  Other bits must be zero.
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_AUTOREPEAT			0xF3
 
-#define KEYBOARD_KEY_P_UPPER				0x50
-#define KEYBOARD_KEY_Q_UPPER				0x51
-#define KEYBOARD_KEY_R_UPPER				0x52
-#define KEYBOARD_KEY_S_UPPER				0x53
-#define KEYBOARD_KEY_T_UPPER				0x54
-#define KEYBOARD_KEY_U_UPPER				0x55
-#define KEYBOARD_KEY_V_UPPER				0x56
-#define KEYBOARD_KEY_W_UPPER				0x57
-#define KEYBOARD_KEY_X_UPPER				0x58
-#define KEYBOARD_KEY_Y_UPPER				0x59
-#define KEYBOARD_KEY_Z_UPPER				0x5A
-#define KEYBOARD_KEY_OPEN_SQUARE_BRACKET	0x5B
-#define KEYBOARD_KEY_BACKSLASH				0x5C
-#define KEYBOARD_KEY_CLOSE_SQUARE_BRACKET	0x5D
-#define KEYBOARD_KEY_CARET					0x5E
-#define KEYBOARD_KEY_UNDERSCORE				0x5F
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_ENABLE_KEYBOARD		0xF4
 
-#define KEYBOARD_KEY_GRAVE					0x60
-#define KEYBOARD_KEY_A_LOWER				0x61
-#define KEYBOARD_KEY_B_LOWER				0x62
-#define KEYBOARD_KEY_C_LOWER				0x63
-#define KEYBOARD_KEY_D_LOWER				0x64
-#define KEYBOARD_KEY_E_LOWER				0x65
-#define KEYBOARD_KEY_F_LOWER				0x66
-#define KEYBOARD_KEY_G_LOWER				0x67
-#define KEYBOARD_KEY_H_LOWER				0x68
-#define KEYBOARD_KEY_I_LOWER				0x69
-#define KEYBOARD_KEY_J_LOWER				0x6A
-#define KEYBOARD_KEY_K_LOWER				0x6B
-#define KEYBOARD_KEY_L_LOWER				0x6C
-#define KEYBOARD_KEY_M_LOWER				0x6D
-#define KEYBOARD_KEY_N_LOWER				0x6E
-#define KEYBOARD_KEY_O_LOWER				0x6F
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_RESET_POWER_ON_CONDITION_WAIT_ENABLE	0xF5
 
-#define KEYBOARD_KEY_P_LOWER				0x70
-#define KEYBOARD_KEY_Q_LOWER				0x71
-#define KEYBOARD_KEY_R_LOWER				0x72
-#define KEYBOARD_KEY_S_LOWER				0x73
-#define KEYBOARD_KEY_T_LOWER				0x74
-#define KEYBOARD_KEY_U_LOWER				0x75
-#define KEYBOARD_KEY_V_LOWER				0x76
-#define KEYBOARD_KEY_W_LOWER				0x77
-#define KEYBOARD_KEY_X_LOWER				0x78
-#define KEYBOARD_KEY_Y_LOWER				0x79
-#define KEYBOARD_KEY_Z_LOWER				0x7A
-#define KEYBOARD_KEY_OPEN_CURLY_BRACKET		0x7B
-#define KEYBOARD_KEY_VERTICAL_BAR			0x7C
-#define KEYBOARD_KEY_CLOSE_CURLY_BRACKET	0x7D
-#define KEYBOARD_KEY_TILDE					0x7E
-#define KEYBOARD_KEY_DEL					0x7F
-*/
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_RESET_POWER_ON_CONDITION_BEGIN			0xF6
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_ALL_KEYS_TO_AUTOREPEAT				0xF7
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_ALL_KEYS_TO_SEND_MAKE_BREAK_CODES	0xF8
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_ALL_KEYS_TO_MAKE_CODES				0xF9
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_ALL_KEYS_TO_AUTOREPEAT_AND_SEND_MAKE_BREAK_CODES	0xFA
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_A_KEY_TO_AUTOREPEAT				0xFB
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_A_KEY_TO_SEND_MAKE_BREAK_CODES		0xFC
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_SET_A_KEY_TO_BREAK_CODES				0xFD
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_RESEND_LAST_RESTULT					0xFE
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_ENCODER_COMMAND_RESET_KEYBOARD_SELF_TEST				0xFF
+
+// ----------------------
+// Response/return codes.
+// ----------------------
+
+/**
+ *  \brief The response code for if the internal buffer overruns.
+ */
+#define KEYBOARD_ENCODER_RESPONSE_BUFFER_OVERRUN				0x00
+
+// 0x01 - 0x58 0x81 - 0xD8 are the scan codes.
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_KEYBOARD_ID					0x83AB
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_SELF_TEST_PASSED				0x55
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_BASIC_ASSURANCE_TEST			0xAA
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_ECHO							0xEE
+
+// 0xF0 prefix for some scan codes. Doesn't apply to PS/2.
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_ACKNONWLEDGE					0xFA
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_BASIC_ASSURANCE_TEST_FAILED	0xFC
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_DIAGONSTIC_FAILURE			0xFD
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_RESEND_LAST_COMMAND			0xFE
+
+/**
+ *  \brief The response code for 
+ */
+#define KEYBOARD_ENCODER_RESPONSE_KET_ERROR						0xFF
+
+// -----------------------------
+// Keyboard controller commands.
+// -----------------------------
+
+// 0x00 - 0x3F: Read from controller RAM.
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_COMMNAD				0x20
+
+// 0x40 - 0x7F: Write to controller RAM.
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_WRITE_COMMAND				0x60
+
+// 0x90 - 0x93: Synaptic multiplexer prefix
+
+// 0x90 - 0x9F: Write port.
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_COPYRIGHT				0xA0
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_FIRMWARE_VERSION		0xA1
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_CHANGE_SPEED_1				0xA2
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_CHANGE_SPEED_2				0xA3
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_CHECK_PASSWORD_INSTALLED	0xA4
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_LOAD_PASSWORD				0xA5
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_CHECK_PASSWORD				0xA6
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_DISABLE_MOUSE_PORT			0xA7
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_ENABLE_MOUSE_PORT			0xA8
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_TEST_MOUSE_PORT				0xA9
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_SELF_TEST					0xAA
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_INTERFACE_TEST				0xAB
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_DIAGNOSTIC_DUMP				0xAC
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_DISABLE_KEYBOARD			0xAD
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_ENABLE_KEYBOARD				0xAE
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_KEYBOARD_VERSION		0xAF
+
+// 0xB0 - 0xB5: Reset controller line
+
+// 0xB6 - 0xBD: Set controller line
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_INPUT_PORT				0xC0
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_CONTINUOUS_INPUT_PORT_POLL_LOW	0xC1
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_CONTINUOUS_INPUT_PORT_POLL_HIGH	0xC2
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_UNBLOCK_CONTOLLER_LINE_P22_P23	0xC8
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_BLOCK_CONTOLLER_LINE_P22_P23	0xC9
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_CONTROLLER_MODE		0xCA
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_WRITE_CONTROLLER_MODE		0xCB
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_OUTPUT_PORT			0xD0
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_WRITE_OUTPUT_PORT			0xD1
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_WRITE_OUTPUT_BUFFER			0xD2
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_WRITE_MOUSE_OUTPUT_BUFFER	0xD3
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_WRITE_TO_MOUSE				0xD4
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_DISABLE_A20					0xDD
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_ENABLE_A20					0xDF
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_READ_TEST_INPUT				0xE0
+
+// 0xF0 - 0xFF: Pulse output bit.
+
+/**
+ *  \brief The command for 
+ */
+#define KEYBOARD_CONTROLLER_COMMAND_SYSTEM_RESET				0xFE
+
+/**
+ *  \brief Disable the keyboard.
+ */
+void disable_keyboard(void);
+
+/**
+ *  \brief Enable the keyboard.
+ */
+void enable_keyboard(void);
+
+/**
+ *  \todo Code this
+ */
+uint8_t keyboard_read_input_port(void);
+
+/**
+ *  \todo Code this
+ */
+uint8_t keyboard_read_output_port(void);
+
+/**
+ *  \todo Code this
+ */
+void keyboard_write_output_port(uint8_t port);
+
+/**
+ *  \todo Code this
+ */
+uint8_t keyboard_read_test_input(void);
+
+/**
+ *  \brief Resets the CPU by pulsing bit 0 of the controllers output port, pin P0. This resets the
+ *  system nicely. This may not work on all systems, so can test if is the program is still running
+ *  after calling this function.
+ */
+void keyboard_system_reset(void);
+
+/**
+ *  \brief Preform the keyboard self test.
+ *  
+ *  \return Returns true if the test passed, else returns false.
+ */
+bool keyboard_self_test(void);
+
+/**
+ *  \brief Perform the keyboard interface test. If the test fails, then is recommended to disable
+ *  the keyboard and reset it and test it again. If fails again. then the keyboard could be
+ *  malfunctioned and not be used.
+ *  
+ *  \return Returns true if the test passed, else returns false.
+ */
+bool keyboard_interface_test(void);
+
+/**
+ *  \brief Read the status register from the keyboard controller.
+ */
+uint8_t keyboard_controller_read_status(void);
+
+/**
+ *  \brief Send a command to the keyboard controller. This waits until the keyboard is ready to
+ *  receive the command then sends it.
+ *  
+ *  \param [in] cmd The command to send.
+ */
+void keyboard_controller_send_command(const uint8_t cmd);
+
+/**
+ *  \brief Read the input buffer of the keyboard encoder.
+ *  
+ *  \return The data in the input buffer of the keyboard encoder.
+ */
+uint8_t kerybaord_encoder_read_input(void);
+
+/**
+ *  \brief Send a command to the keyboard encoder. This first it sent to the keyboard controller so
+ *  will need to wait until it is ready to receive the command.
+ *  
+ *  \param [in] cmd The command to send to the keyboard encoder.
+ */
+void kerybaord_encoder_send_command(const uint8_t cmd);
 
 /**
  *  \brief Given a keyboard key, return the ASCII value of the key.

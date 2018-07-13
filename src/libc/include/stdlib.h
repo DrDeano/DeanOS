@@ -13,11 +13,7 @@ extern "C" {
 #endif
 
 /**
- *  \brief Brief description
- *  
- *  \return Return description
- *  
- *  \details More details
+ *  \brief Causes an abnormal program termination.
  */
 noreturn void abort(void);
 

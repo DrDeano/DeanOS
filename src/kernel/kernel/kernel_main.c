@@ -2,7 +2,6 @@
  *  \file kernel_main.c
  *  \brief The main kernel
  */
-
 #include <stddef.h>
 #include <stdint.h>
 #include <stdnoreturn.h>
@@ -45,7 +44,7 @@ noreturn void panic(const char * format, ...) {
 
 	// Show panic.
 	kprintf("\nPANIC:\n");
-	kprintf_va(format, args);
+	kvprintf(format, args);
 	kprintf("\n\nHalted");
 	
 	va_end(args);

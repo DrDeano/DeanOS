@@ -43,6 +43,6 @@ rtc_date_time_t * zero_date_time(rtc_date_time_t * d1);
 rtc_date_time_t * copy_date_time(rtc_date_time_t * d1, rtc_date_time_t * d2);
 void set_rate(uint8_t rate);
 rtc_date_time_t * read_rtc(rtc_date_time_t * date, bool hour_24h, bool day_light_savings);
-void rtc_init();
+void rtc_init(void);
 
 #endif /* INCLUDE_RTC_H */

@@ -1,19 +1,21 @@
 #include <stdio.h>
-
-#include <tty.h>
-
 #include <limits.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
 
-struct flags {
-	bool left_align;
-	bool plus;
-	bool space;
-	bool zero;
-	bool hash;
-};
+#include <tty.h>
+
+/**
+ *  \brief The flags structure that holds what flags have been used in the current formated string.
+ */
+typedef struct {
+	bool left_align;	/**< The left alignment flag. */
+	bool plus;			/**< Whether a + is append to positive numbers. */
+	bool space;			/**< Whether the extra width is filled with spaces. */
+	bool zero;			/**< Whether the extra width is filled with zeros. */
+	bool hash;			/**< \see https://en.wikipedia.org/wiki/Printf_format_string */
+} flags;
 
 int kputchar(int c) {
 	char ch = (char) c;
@@ -21,7 +23,14 @@ int kputchar(int c) {
 	return 1;
 }
 
-int kprint_string(char * str, size_t width) {
+/**
+ *  \brief Helper function for prints a C string.
+ *  
+ *  \param [in] str   The string to print.
+ *  \param [in] width The width field.
+ *  \return The number for characters printed.
+ */
+static int kprint_string(char * str, size_t width) {
 	int written = 0;
 	
 	if (width == 0) { // Print full string
@@ -39,7 +48,6 @@ int kprint_string(char * str, size_t width) {
 			str++;
 			width--;
 		}
-		
 	}
 	
 	return written;
@@ -76,7 +84,7 @@ static int kprint_hex_digit(uint8_t num, bool capital, bool pad) {
  *  
  *  \return The number of characters printed
  */
-static int kprint_int(int32_t num, uint8_t width, struct flags flag) {
+static int kprint_int(int32_t num, uint8_t width, flags flag) {
 	// If 0, then just print 0
 	int j;
 	int k = 1;
@@ -116,10 +124,8 @@ static int kprint_int(int32_t num, uint8_t width, struct flags flag) {
 		for(j = width - (sizeof(buffer) - i - 2); j > 0; j--) {
 			if(flag.zero) {
 				buffer[i--] = '0';
-				//written += kputchar('0');
 			} else {
 				buffer[i--] = ' ';
-				//written += kputchar(' ');
 			}
 		}
 	}
@@ -142,7 +148,7 @@ static int kprint_int(int32_t num, uint8_t width, struct flags flag) {
  *  
  *  \return The number of characters printed
  */
-static int kprint_uint(uint32_t num, uint8_t width, struct flags flag) {
+static int kprint_uint(uint32_t num, uint8_t width, flags flag) {
 	// If 0, then just print 0
 	if (num == 0) {
 		kputchar('0');
@@ -226,24 +232,10 @@ static int kprint_hex(const uint32_t num, const bool capital, uint8_t width) {
 	return written;
 }
 
-int kprintf_va(const char * format, va_list args) {
+int kvprintf(const char * format, va_list args) {
 	int written = 0;
 	
-	// terminal_write_string("Format: ");
-	// terminal_write_string(format);
-	// terminal_put_char('\n');
-	
-	// Flags
-	/**
-	 *  \todo
-	 */
-	//bool left_align = false;
-	//bool plus       = false;
-	//bool space      = false;
-	//bool zero       = false;
-	//bool hash       = false;
-	
-	struct flags flag;
+	flags flag;
 	
 	size_t width;
 	//size_t precision;
@@ -261,11 +253,7 @@ int kprintf_va(const char * format, va_list args) {
 		flag.hash = false;
 		
 		width = 0;
-		//precision = 0
-		
-		// terminal_write_string("CHAR: ");
-		// terminal_put_char(c);
-		// terminal_put_char('\n');
+		//precision = 0;
 		
 		if (c == '%') { // Is it the start of a format
 			char f = *format++;
@@ -477,8 +465,6 @@ int kprintf_va(const char * format, va_list args) {
 			}
 		} else { // Just print the character
 			written += kputchar(c);
-			//terminal_put_char(c);
-			//written++;
 		}
 	}
 	
@@ -491,14 +477,10 @@ int kprintf_va(const char * format, va_list args) {
 int kprintf(const char * format, ...) {
 	int written = 0;
 	
-	// terminal_write_string("kprintf format: ");
-	// terminal_write_string(format);
-	// terminal_put_char('\n');
-	
 	va_list args;
 	va_start(args, format);
 	
-	written += kprintf_va(format, args);
+	written += kvprintf(format, args);
 
 	va_end(args);
 	return written;

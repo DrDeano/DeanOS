@@ -385,6 +385,109 @@ static const key_mapping key_to_ascii_map[] = {
 };
 
 /**
+ *  \brief Wait until the keyboard is ready to be sent data and/or commands by checking if the
+ *  buffer is full.
+ */
+static void keyboard_controller_wait_send(void) {
+	//uint32_t timeout = 1000000;
+	while(1 /*timeout--*/) {
+		// Read the status register and check that the input buffer is full. If full, then try again until not full
+		if ((keyboard_controller_read_status() & KEYBOARD_STATUS_REGISTER_INPUT_BUFFER_MASK) == 0) {
+			return;
+		}
+	}
+}
+
+/**
+ *  \brief Wait until the keyboard output buffer is full ready to be read from by checking if the
+ *  buffer is full.
+ */
+static void keyboard_controller_wait_receive(void) {
+	while(1) {
+		// Read the status register and check that the input buffer is full. If full, then try again until not full
+		if ((keyboard_controller_read_status() & KEYBOARD_STATUS_REGISTER_OUTPUT_BUFFER_MASK) == 0) {
+			return;
+		}
+	}
+}
+
+uint8_t keyboard_controller_read_status(void) {
+	return in_port_byte(KEYBOARD_CONTROLLER_READ_STATUS_REGISTER);
+}
+
+uint8_t keybaord_encoder_read_input(void) {
+	return in_port_byte(KEYBOARD_ENCODER_READ_INPUT_BUFFER);
+}
+
+void keyboard_controller_send_command(uint8_t cmd) {
+	// Wait until the keyboard is ready
+	keyboard_controller_wait_send();
+	// Send the command.
+	out_port_byte(KEYBOARD_CONTROLLER_SEND_COMMAND, cmd);
+}
+
+void keybaord_encoder_send_command(const uint8_t cmd) {
+	keyboard_controller_wait_send();
+	out_port_byte(KEYBOARD_ENCODER_SEND_COMMAND, cmd);
+}
+
+void disable_keyboard(void) {
+	keyboard_controller_send_command(KEYBOARD_CONTROLLER_COMMAND_DISABLE_KEYBOARD);
+}
+
+void enable_keyboard(void) {
+	keyboard_controller_send_command(KEYBOARD_CONTROLLER_COMMAND_ENABLE_KEYBOARD);
+}
+
+uint8_t keyboard_read_input_port(void) {
+	return 0;
+}
+
+uint8_t keyboard_read_output_port(void) {
+	return 0;
+}
+
+void keyboard_write_output_port(uint8_t port) {
+	(void) port;
+}
+
+uint8_t keyboard_read_test_input(void) {
+	return 0;
+}
+
+void keyboard_system_reset(void) {
+	keyboard_controller_send_command(KEYBOARD_CONTROLLER_COMMAND_WRITE_OUTPUT_PORT);
+	keybaord_encoder_send_command(KEYBOARD_CONTROLLER_COMMAND_SYSTEM_RESET);
+}
+
+bool keyboard_self_test(void) {
+	// Send the self test command
+	keyboard_controller_send_command(KEYBOARD_CONTROLLER_COMMAND_SELF_TEST);
+	
+	// Wait until buffer is full
+	keyboard_controller_wait_receive();
+	
+	return (keybaord_encoder_read_input() == KEYBOARD_ENCODER_RESPONSE_SELF_TEST_PASSED) ? true : false;
+}
+
+bool keyboard_interface_test(void) {
+	// Send the interface test command
+	keyboard_controller_send_command(KEYBOARD_CONTROLLER_COMMAND_INTERFACE_TEST);
+	
+	// Wait until buffer is full
+	keyboard_controller_wait_receive();
+	
+	
+    // 0x00: Success, no errors
+    // 0x01: Keyboard clock line stuck low
+    // 0x02: Keyboard clock line stuck high
+    // 0x03: Keyboard data line stuck high
+    // 0xFF: General error
+	
+	return (keybaord_encoder_read_input() == 0x00) ? true : false;
+}
+
+/**
  *  \brief Set the keyboard caps, num and scroll lock lights depending whether the keys have been
  *  pressed/toggled.
  *  
@@ -394,8 +497,8 @@ static const key_mapping key_to_ascii_map[] = {
  */
 static void set_keyboard_lights(bool scroll_lock, bool num_lock, bool caps_lock) {
 	uint8_t data = (scroll_lock << 3) | (num_lock << 2) | caps_lock;
-	ps2_send_command(KEYBOARD_SET_LED);
-	ps2_send_command(data);
+	keybaord_encoder_send_command(KEYBOARD_ENCODER_COMMAND_SET_LED);
+	keybaord_encoder_send_command(data);
 }
 
 /**

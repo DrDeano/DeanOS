@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -m32 -masm=intel -Wall -Wextra -std=c11 -O2 -c -ffreestanding -Iinclude -I../kernel/include
+CFLAGS = -m32 -masm=intel -Wall -Wextra -std=c11 -O2 -c -ffreestanding -Iinclude -I../kernel/include -D__is_libk
 
 AR = ar
 ARFLAGS = -rcs

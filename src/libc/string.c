@@ -19,7 +19,7 @@ int memcmp(const void * ptr1, const void * ptr2, size_t n) {
 	return 0;
 }
 
-void * memcpy(void * dest, const void * src, size_t n) {
+void * memcpy(void * dest, const void * src, const size_t n) {
 	if(dest == src || n == 0 || !dest || !src) {
 		return dest;
 	}
@@ -45,7 +45,7 @@ void * memcpy(void * dest, const void * src, size_t n) {
 	
 	return dest;
 	
-	// If the data is word alligned, then can copy by words
+	// If the data is word aligned, then can copy by words
 	
 	// Else copy by bytes
 }
@@ -88,16 +88,16 @@ void * memmove(void * dest, const void * src, const size_t n) {
 	
 	return dest;
 	
-	// If the data is word alligned, then can copy by words
+	// If the data is word aligned, then can copy by words
 	
 	// Else copy by bytes
 }
 
-void * memset(void * src, int val, size_t n) {
-	unsigned char c = (unsigned char) val;
+void * memset(void * src, const int c, size_t n) {
+	unsigned char uc = (unsigned char) c;
 	unsigned char * ptr = (unsigned char *) src;
 	while(n--) {
-		*ptr++ = c;
+		*ptr++ = uc;
 	}
 	return src;
 }

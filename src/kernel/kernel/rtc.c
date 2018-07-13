@@ -12,24 +12,24 @@
 
 static uint8_t century_reg = 0;
 
-static uint8_t get_update_in_progress_flag() {
+static uint8_t get_update_in_progress_flag(void) {
 	out_port_byte(CMOS_ADDRESS, CMOS_REG_STATUS_A);
 	return (in_port_byte(CMOS_DATA) & 0x80);
 }
 
-static uint8_t get_data_from_rct_reg(uint8_t reg) {
+static uint8_t get_data_from_rct_reg(const uint8_t reg) {
 	out_port_byte(CMOS_ADDRESS, reg);
 	return in_port_byte(CMOS_DATA);
 }
 
 static rtc_date_time_t * day_of_week(rtc_date_time_t * date) {
-	static int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+	static const int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 	date->year -= date->month < 3;
 	date->day_of_week = (date->year + date->year/4 - date->year/100 + date->year/400 + t[date->month-1] + date->day) % 7;
 	return date;
 }
 
-rtc_date_time_t * read_rtc(rtc_date_time_t * date, bool hour_24h, bool day_light_savings) {
+rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h, const bool day_light_savings) {
 	uint8_t second;
 	uint8_t minute;
 	uint8_t hour;
@@ -67,9 +67,8 @@ rtc_date_time_t * read_rtc(rtc_date_time_t * date, bool hour_24h, bool day_light
 		century = -1;
 	}
 	
-	// Use the mothod:
-	// - Read the registers twice and check if they are the same so to avoid inconsistent values
-	//   due to RTC updates
+	// Use the method:
+	// Read the registers twice and check if they are the same so to avoid inconsistent values due to RTC updates
 	do {
 		last_second = second;
 		last_minute = minute;
@@ -123,7 +122,7 @@ rtc_date_time_t * read_rtc(rtc_date_time_t * date, bool hour_24h, bool day_light
 		} else {
 			hour++;
 		}
-	}
+	} // Handle 12 hr format
 	
 	
 	// Calculate the full (4-digit) year
@@ -192,13 +191,13 @@ void set_rate(uint8_t rate) {
 
 static void rtc_handler(regs_t * regs) {
 	(void) regs;
-	set_display_time();
+	set_display_time();					// May change to update internal time and have get time function and other function poll this.
 	
 	out_port_byte(CMOS_ADDRESS, 0x0C);	// select register C
 	in_port_byte(CMOS_DATA);			// just throw away contents
 }
 
-void rtc_init() {
+void rtc_init(void) {
 	irq_install_handler(8, rtc_handler);
 	set_rate(15);
 	interrupt_disable();
