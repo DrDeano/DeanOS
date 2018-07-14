@@ -64,7 +64,7 @@
 /**
  *  \brief Whether the auxiliary output buffer is full. This also depends on the mode the
  *  controller is operating in. For PS/2 systems: if set, then is mouse data if you can read
- *  from \ref KEYBOARD_READ_INPUT_BUFFER_KE. If unset, then determines if read form port 0x60 is valid
+ *  from \ref KEYBOARD_ENCODER_READ_INPUT_BUFFER. If unset, then determines if read form port 0x60 is valid
  *  if value is 0. For AT systems: If set the the OK flag. If unset, then timeout o transmission
  *  from controller to keyboard. May indicate that no keyboard is present.
  */

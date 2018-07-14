@@ -8,14 +8,14 @@
 /**
  *  \brief Enable interrupts.
  */
-static inline void interrupt_enable() {
+static inline void interrupt_enable(void) {
 	__asm__ __volatile__ ("sti");
 }
 
 /**
  *  \brief Disable interrupts.
  */
-static inline void interrupt_disable() {
+static inline void interrupt_disable(void) {
 	__asm__ __volatile__ ("cli");
 }
 

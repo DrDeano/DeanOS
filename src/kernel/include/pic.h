@@ -351,42 +351,42 @@
  *  
  *  \param [in] cmd The command to send.
  */
-extern void pic_send_command_master(uint8_t cmd);
+void pic_send_command_master(uint8_t cmd);
 
 /**
  *  \brief Send data to the master PIC on its assigned port.
  *  
  *  \param [in] data The data to send.
  */
-extern void pic_send_data_master(uint8_t data);
+void pic_send_data_master(uint8_t data);
 
 /**
  *  \brief Send a command to the slave PIC on its assigned port.
  *  
  *  \param [in] cmd The command to send.
  */
-extern void pic_send_command_slave(uint8_t cmd);
+void pic_send_command_slave(uint8_t cmd);
 
 /**
  *  \brief Send data to the slave PIC on its assigned port.
  *  
  *  \param [in] data The data to send.
  */
-extern void pic_send_data_slave(uint8_t data);
+void pic_send_data_slave(uint8_t data);
 
 /**
  *  \brief Receive data from the master PIC from its assigned port.
  *  
  *  \return The value from the Interrupt Mask Register.
  */
-extern uint8_t pic_receive_data_master(void);
+uint8_t pic_receive_data_master(void);
 
 /**
  *  \brief Receive data from the slave PIC from its assigned port.
  *  
  *  \return The value from the Interrupt Mask Register.
  */
-extern uint8_t pic_receive_data_slave(void);
+uint8_t pic_receive_data_slave(void);
 
 /**
  *  \brief Send the end of interrupt command for a specific IRQ to the master and/or slave PIC's
@@ -395,6 +395,20 @@ extern uint8_t pic_receive_data_slave(void);
  *  \param [in] irq The IRQ number for the interrupt that has finished.
  */
 void pic_send_end_of_interrupt(uint8_t irq);
+
+/**
+ *  \brief Mask off a interrupt to disable the interrupt by supplying the IRQ number.
+ *  
+ *  \param [in] irq_num The IRQ number to be masked off.
+ */
+void irq_set_mask(uint8_t irq_num);
+
+/**
+ *  \brief Unmask a interrupt to enable the interrupt by supplying the IRQ number.
+ *  
+ *  \param [in] irq_num The IRQ number to unmask.
+ */
+void irq_clear_mask(uint8_t irq_num);
 
 /**
  *  \brief Remap all the PIC IRQ's so that they don't conflict with the processors interrupts.

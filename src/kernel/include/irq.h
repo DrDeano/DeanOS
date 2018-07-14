@@ -8,8 +8,6 @@
 #include <regs_t.h>
 
 /**
- *  \def IRQ_TOTAL
- *  
  *  \brief The total number of IRQ's that can be handled
  */
 #define IRQ_TOTAL	16

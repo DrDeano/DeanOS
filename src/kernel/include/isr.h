@@ -9,15 +9,14 @@
 #include <regs_t.h>
 
 /**
- *  \def ISR_TOTAL
- *  
  *  \brief The total number of ISR's
  */
 #define ISR_TOTAL 32
 
 /**
- *  A list of exceptions that can be generated that need to be handled.
- *  https://wiki.osdev.org/Exceptions
+ *  \brief A list of exceptions that can be generated that need to be handled.
+ *  
+ *  \see https://wiki.osdev.org/Exceptions
  */
 enum {
     EXCEPTION_DIVIDE_BY_ZERO				= 0,
@@ -70,6 +69,6 @@ void isr_uninstall_handler(uint8_t isr_num);
 /**
  *  \brief Initiate the ISR's by adding to the IDT the exception handlers for each IRS.
  */
-void isr_init();
+void isr_init(void);
 
 #endif /* INCLUDE_ISR_H */

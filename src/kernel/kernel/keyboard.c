@@ -13,9 +13,9 @@
  * (if has one). If hasn't got an upper case ASCII value, then is the same as the lower case value.
  */
 typedef struct {
-    const uint8_t key;
-    const unsigned char ascii;
-    const unsigned char shift_ascii;
+    const uint8_t key;					/**< The key enum that was presses */
+    const unsigned char ascii;			/**< The ASCII value of the key */
+    const unsigned char shift_ascii;	/**< The uppercase ASCII value, if a character. */
 } key_mapping;
 
 /**
@@ -415,7 +415,7 @@ uint8_t keyboard_controller_read_status(void) {
 	return in_port_byte(KEYBOARD_CONTROLLER_READ_STATUS_REGISTER);
 }
 
-uint8_t keybaord_encoder_read_input(void) {
+uint8_t keyboard_encoder_read_input(void) {
 	return in_port_byte(KEYBOARD_ENCODER_READ_INPUT_BUFFER);
 }
 
@@ -426,7 +426,7 @@ void keyboard_controller_send_command(uint8_t cmd) {
 	out_port_byte(KEYBOARD_CONTROLLER_SEND_COMMAND, cmd);
 }
 
-void keybaord_encoder_send_command(const uint8_t cmd) {
+void keyboard_encoder_send_command(const uint8_t cmd) {
 	keyboard_controller_wait_send();
 	out_port_byte(KEYBOARD_ENCODER_SEND_COMMAND, cmd);
 }
@@ -457,7 +457,7 @@ uint8_t keyboard_read_test_input(void) {
 
 void keyboard_system_reset(void) {
 	keyboard_controller_send_command(KEYBOARD_CONTROLLER_COMMAND_WRITE_OUTPUT_PORT);
-	keybaord_encoder_send_command(KEYBOARD_CONTROLLER_COMMAND_SYSTEM_RESET);
+	keyboard_encoder_send_command(KEYBOARD_CONTROLLER_COMMAND_SYSTEM_RESET);
 }
 
 bool keyboard_self_test(void) {
@@ -467,7 +467,7 @@ bool keyboard_self_test(void) {
 	// Wait until buffer is full
 	keyboard_controller_wait_receive();
 	
-	return (keybaord_encoder_read_input() == KEYBOARD_ENCODER_RESPONSE_SELF_TEST_PASSED) ? true : false;
+	return (keyboard_encoder_read_input() == KEYBOARD_ENCODER_RESPONSE_SELF_TEST_PASSED) ? true : false;
 }
 
 bool keyboard_interface_test(void) {
@@ -484,7 +484,7 @@ bool keyboard_interface_test(void) {
     // 0x03: Keyboard data line stuck high
     // 0xFF: General error
 	
-	return (keybaord_encoder_read_input() == 0x00) ? true : false;
+	return (keyboard_encoder_read_input() == 0x00) ? true : false;
 }
 
 /**
@@ -495,10 +495,10 @@ bool keyboard_interface_test(void) {
  *  \param [in] num_lock    Whether the number lock is on.
  *  \param [in] caps_lock   Whether the caps lock is on.
  */
-static void set_keyboard_lights(bool scroll_lock, bool num_lock, bool caps_lock) {
+static void keyboard_set_lights(bool scroll_lock, bool num_lock, bool caps_lock) {
 	uint8_t data = (scroll_lock << 3) | (num_lock << 2) | caps_lock;
-	keybaord_encoder_send_command(KEYBOARD_ENCODER_COMMAND_SET_LED);
-	keybaord_encoder_send_command(data);
+	keyboard_encoder_send_command(KEYBOARD_ENCODER_COMMAND_SET_LED);
+	keyboard_encoder_send_command(data);
 }
 
 /**
@@ -514,7 +514,7 @@ void keyboard_handler(regs_t * regs) {
 	unsigned char key_pressed;
 
     // Read from the keyboard's data buffer
-	scancode = in_port_byte(0x60);
+	scancode = keyboard_encoder_read_input();
 	
 	// Handle extended codes for home, insert, end, ...
 	// https://wiki.osdev.org/PS/2_Keyboard
@@ -556,17 +556,17 @@ void keyboard_handler(regs_t * regs) {
 		switch (key_pressed) {
 			case KEYBOARD_KEY_SCROLL_LOCK:
 				scroll_lock_toggle = !scroll_lock_toggle;
-				set_keyboard_lights(scroll_lock_toggle, num_lock_toggle, caps_lock_toggle);
+				keyboard_set_lights(scroll_lock_toggle, num_lock_toggle, caps_lock_toggle);
 				break;
 			
 			case KEYBOARD_KEY_NUM_LOCK:
 				num_lock_toggle = !num_lock_toggle;
-				set_keyboard_lights(scroll_lock_toggle, num_lock_toggle, caps_lock_toggle);
+				keyboard_set_lights(scroll_lock_toggle, num_lock_toggle, caps_lock_toggle);
 				break;
 			
 			case KEYBOARD_KEY_CAPS_LOCK:
 				caps_lock_toggle = !caps_lock_toggle;
-				set_keyboard_lights(scroll_lock_toggle, num_lock_toggle, caps_lock_toggle);
+				keyboard_set_lights(scroll_lock_toggle, num_lock_toggle, caps_lock_toggle);
 				break;
 			
 			case KEYBOARD_KEY_LEFT_SHIFT:
@@ -584,9 +584,9 @@ void keyboard_handler(regs_t * regs) {
 				alt_pressed = true;
 				break;
 		}
-		
 		last_key_press = key_pressed;
 	}
+	
 }
 
 char key_to_ascii(unsigned char key) {
@@ -621,6 +621,8 @@ void keyboard_init() {
 	caps_lock_toggle = false;
 	num_lock_toggle = false;
 	scroll_lock_toggle = false;
+	
+	keyboard_set_lights(scroll_lock_toggle, num_lock_toggle, caps_lock_toggle);
 	
 	is_extended = false;
 	

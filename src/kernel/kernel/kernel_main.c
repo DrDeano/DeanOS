@@ -32,7 +32,7 @@ static int prev_command_buffer_end = 0;
 static int prev_command_buffer_index = 0;
 
 static char command_buffer[64] = {0};
-int command_buffer_index;
+static int command_buffer_index;
 
 noreturn void panic(const char * format, ...) {
 	// Disable interrupts.
@@ -492,12 +492,17 @@ static void kernel_task(void) {
 	}
 }
 
+/**
+ *  \brief The kernel main entry point that initiates everything.
+ */
 noreturn void kernel_main(void) {
 	// Get the parameters from the bootloader. The cursor position
-	boot_params * params = get_boot_params(ADDRESS);
+	boot_params params;
+	
+	get_boot_params(&params);
 	
 	/* Initialize terminal interface */
-	terminal_initialise(params);
+	terminal_initialise(&params);
 	
 	gdt_init();
 	

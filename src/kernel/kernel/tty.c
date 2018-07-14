@@ -218,7 +218,7 @@ void terminal_initialise(boot_params * params) {
 	
 	zero_date_time(&on_screen_time);
 	
-	if(params) {
+	if(params && (params->sig != 0)) {
 		terminal_row = params->cursor_y;
 		terminal_column = params->cursor_x;
 		
@@ -241,6 +241,7 @@ void terminal_initialise(boot_params * params) {
 		terminal_row += row_offset + TERMINAL_ROW_MIN;
 		
 	} else {
+		// Clear the screen
 		terminal_row = 0;
 		terminal_column = 0;
 		for (size_t y = 0; y < VGA_HEIGHT; y++) {
@@ -249,6 +250,7 @@ void terminal_initialise(boot_params * params) {
 				terminal_buffer[index] = vga_entry(' ', terminal_colour);
 			}
 		}
+		terminal_row = TERMINAL_ROW_MIN;
 	}
 	
 	print_logo();

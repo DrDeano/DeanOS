@@ -32,15 +32,13 @@ typedef struct {
 } __attribute__((__packed__)) boot_params;
 
 /**
- *  \brief Take the address given and take the data at that location and store into the boot_params
- *  structure
+ *  \brief Get the boot parameters from the bootloader.
  *  
- *  \param [in] addr The location of the parameters provided by the bootloader
  *  \return A pointer to the a boot_params structure that holds data at the address location
  *  
  *  \details The address given will be a set address that will be the same for the ADDRESS defined
  *  and the address that the bootloader places the information for the kernel.
  */
-boot_params * get_boot_params(void * addr);
+boot_params * get_boot_params(boot_params * param);
 
 #endif /* INCLUDE_BOOT_H */

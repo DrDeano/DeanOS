@@ -10,36 +10,26 @@
 #include <stdbool.h>
 
 /**
- * \def IDT_ENTRIES
- * 
  * \brief The total number of table entries for the IDT.
  */
 #define IDT_ENTRIES			256
 
 /**
- * \def IDT_SIZE
- * 
  * \brief The total number of bytes that the IDT takes up.
  */
 #define IDT_SIZE			(sizeof(idt_entry_t) * IDT_ENTRIES)
 
 /**
- * \def IDT_TASK_GATE
- * 
  * \brief The IDT task gate flag
  */
 #define IDT_TASK_GATE		0x05
 
 /**
- * \def IDT_INTERRUPT_GATE
- * 
  * \brief The IDT interrupt gate flag
  */
 #define IDT_INTERRUPT_GATE	0x0e
 
 /**
- * \def IDT_TRAP_GATE
- * 
  * \brief The IDT trap gate flag
  */
 #define IDT_TRAP_GATE		0x0f

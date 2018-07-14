@@ -7,23 +7,22 @@
 #define INCLUDE_VGA_H
  
 #include <stdint.h>
-#include <portio.h>
 
-#define VGA_WIDTH						80						/**< The width of the display. 80 characters wide */
-#define VGA_HEIGHT						25						/**< The height of the display. 25 characters long */
-#define VGA_MEMORY						(uint16_t *) 0xB8000	/**< The memory location of the display to write data to */
+#define VGA_WIDTH						80						/**< The width of the display. 80 characters wide. */
+#define VGA_HEIGHT						25						/**< The height of the display. 25 characters long. */
+#define VGA_MEMORY						(uint16_t *) 0xB8000	/**< The memory mapped location of the display memory to write data to to displayt characters and colour. */
 
-#define VGA_PORT_CRTC_ADDRESS			0x03D4					/**<  */
-#define	VGA_PORT_CRTC_DATA				0x03D5					/**<  */
+#define VGA_PORT_CRTC_ADDRESS			0x03D4					/**< The port address for the VGA address. */
+#define	VGA_PORT_CRTC_DATA				0x03D5					/**< The port address for the VGA data. */
 
-#define VGA_REG_CURSOR_START			0x0A					/**<  */
-#define VGA_REG_CURSOR_END				0x0B					/**<  */
+#define VGA_REG_CURSOR_START			0x0A					/**< The command for setting the start of the cursor scan line. */
+#define VGA_REG_CURSOR_END				0x0B					/**< The command for setting the end of the cursor scan line. */
 
-#define VGA_REG_CURSOR_LOCATION_HIGH	0x0E					/**<  */
-#define VGA_REG_CURSOR_LOCATION_LOW		0x0F					/**<  */
+#define VGA_REG_CURSOR_LOCATION_HIGH	0x0E					/**< The command for setting the upper byte of the curser's linear location. */
+#define VGA_REG_CURSOR_LOCATION_LOW		0x0F					/**< The command for setting the lower byte of the curser's linear location. */
 
-#define VGA_CURSOR_SCANLINE_START		0x00					/**<  */
-#define VGA_CURSOR_SCANLINE_END			0x0F					/**<  */
+#define VGA_CURSOR_SCANLINE_START		0x00					/**< The start of the cursor scan line, the very beginning. */
+#define VGA_CURSOR_SCANLINE_END			0x0F					/**< The end of the cursor scan line, the very end. */
 
 /**
  *  \brief The set of colours that VGA supports and can display for the foreground and background
@@ -58,38 +57,28 @@ enum vga_colour {
  *  \details Takes 2 4 bit values that represent the foreground and background colour of the text
  *  and returns a 8 bit value that gives both to be displayed
  */
-static inline uint8_t vga_entry_colour(enum vga_colour fg, enum vga_colour bg) {
-	return fg | bg << 4;
-}
+uint8_t vga_entry_colour(enum vga_colour fg, enum vga_colour bg);
 
 /**
  *  \brief Create a VGA entry from the character, foreground and background colour
  *  
  *  \param [in] uc The character
- *  \param [in] colour The foreground and background clour
+ *  \param [in] colour The foreground and background colour
  *  \return The VGA entry
  *  
- *  \details Create the 2 bytes entry that the vga used to display a character with a foreground
+ *  \details Create the 2 bytes entry that the VGA used to display a character with a foreground
  *  and background colour
  */
-static inline uint16_t vga_entry(unsigned char uc, uint8_t colour) {
-	return (uint16_t) uc | (uint16_t) colour << 8;
-}
+uint16_t vga_entry(unsigned char uc, uint8_t colour);
 
 /**
  *  \brief Enables the blinking cursor to that is is visible.
  */
-static void enable_cursor(void) {
-	out_port_byte(VGA_PORT_CRTC_ADDRESS, VGA_REG_CURSOR_START);
-	out_port_byte(VGA_PORT_CRTC_DATA, VGA_CURSOR_SCANLINE_START);
-	
-	out_port_byte(VGA_PORT_CRTC_ADDRESS, VGA_REG_CURSOR_END);
-	out_port_byte(VGA_PORT_CRTC_DATA, VGA_CURSOR_SCANLINE_END);
-}
+void enable_cursor(void);
 
-/* static void disable_cursor(void) {
-	out_port_byte(VGA_PORT_CRTC_ADDRESS, VGA_REG_CURSOR_START);
-	out_port_byte(VGA_PORT_CRTC_DATA, 0x20);
-} */
+/**
+ *  \brief Disables the blinking cursor to that is is visible.
+ */
+void disable_cursor(void);
 
 #endif /* INCLUDE_VGA_H */

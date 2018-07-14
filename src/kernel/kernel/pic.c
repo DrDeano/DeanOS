@@ -1,26 +1,26 @@
 #include <pic.h>
 
-inline void pic_send_command_master(uint8_t cmd) {
+void pic_send_command_master(uint8_t cmd) {
 	out_port_byte(PIC_COMMAND_REG_MASTER, cmd);
 }
 
-inline void pic_send_data_master(uint8_t data) {
+void pic_send_data_master(uint8_t data) {
 	out_port_byte(PIC_DATA_REG_MASTER, data);
 }
 
-inline void pic_send_command_slave(uint8_t cmd) {
+void pic_send_command_slave(uint8_t cmd) {
 	out_port_byte(PIC_COMMAND_REG_SLAVE, cmd);
 }
 
-inline void pic_send_data_slave(uint8_t data) {
+void pic_send_data_slave(uint8_t data) {
 	out_port_byte(PIC_DATA_REG_SLAVE, data);
 }
 
-inline uint8_t pic_receive_data_master(void) {
+uint8_t pic_receive_data_master(void) {
 	return in_port_byte(PIC_DATA_REG_MASTER);
 }
 
-inline uint8_t pic_receive_data_slave(void) {
+uint8_t pic_receive_data_slave(void) {
 	return in_port_byte(PIC_DATA_REG_SLAVE);
 }
 
@@ -32,6 +32,34 @@ void pic_send_end_of_interrupt(uint8_t irq) {
 
 	// Then send an EOI to the master interrupt controller
 	pic_send_command_master(PIC_OCW2_END_OF_INTERRUPT);
+}
+
+void irq_set_mask(uint8_t irq_num) {
+    uint16_t port;
+    uint8_t value;
+	
+    if(irq_num < 8) {
+        port = PIC_INTERRUPT_MASK_REG_MASTER;
+    } else {
+        port = PIC_INTERRUPT_MASK_REG_SLAVE;
+        irq_num -= 8;
+    }
+    value = in_port_byte(port) | (1 << irq_num);
+    out_port_byte(port, value);        
+}
+
+void irq_clear_mask(uint8_t irq_num) {
+    uint16_t port;
+    uint8_t value;
+	
+    if(irq_num < 8) {
+        port = PIC_INTERRUPT_MASK_REG_MASTER;
+    } else {
+        port = PIC_INTERRUPT_MASK_REG_SLAVE;
+        irq_num -= 8;
+    }
+    value = in_port_byte(port) & ~(1 << irq_num);
+    out_port_byte(port, value);        
 }
 
 void pic_remap_irq(void) {
@@ -62,32 +90,3 @@ void pic_remap_irq(void) {
 	pic_send_data_master(mask_m);
 	pic_send_data_slave(mask_s);
 }
-
-// Functions for setting and clearing the interrupt mask register for a specific IRQ line
-/* void irq_set_mask(uint8_t irq_line) {
-    uint16_t port;
-    uint8_t value;
- 
-    if(irq_line < 8) {
-        port = PIC1_DATA;
-    } else {
-        port = PIC2_DATA;
-        irq_line -= 8;
-    }
-    value = in_port_byte(port) | (1 << irq_line);
-    out_port_byte(port, value);        
-}
-
-void irq_clear_mask(uint8_t irq_line) {
-    uint16_t port;
-    uint8_t value;
- 
-    if(irq_line < 8) {
-        port = PIC1_DATA;
-    } else {
-        port = PIC2_DATA;
-        irq_line -= 8;
-    }
-    value = in_port_byte(port) & ~(1 << irq_line);
-    out_port_byte(port, value);        
-} */
