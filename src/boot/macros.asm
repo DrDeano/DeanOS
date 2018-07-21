@@ -3,6 +3,12 @@
 	call reboot
 %endmacro
 
+; The reboot macro
+%macro m_reboot_with_msg 1
+	m_write_line %1
+	call reboot
+%endmacro
+
 ; m_write_line str_to_write
 %macro m_write_line 1
 	lea		si, [%1]
@@ -29,14 +35,13 @@
 	xor		dx, dx						; Must be 0 initially for the multiplication
 	mul		word [Root_directory_size]
 	div		word [Bytes_per_sector]
-	mov		cx, ax						; The number of root entries to read in cx for the loop
+	mov		cx, ax						; The number of root entries to read in CX for the loop
 	mov		word [root_sectors], ax		; Save this value
 	
 	; Calculate the start of the root directory
 	; root_start = (FAT tables) * (sectors per FAT) + (reserved sectors) + (hidden sectors)
 	xor		ax, ax
 	mov		al, byte [FAT_tables]
-	;mov		bx, word [Sectors_per_FAT]
 	mul		word [Sectors_per_FAT]
 	add		ax, word [Hidden_sectors]		; Add the top half of hidden sectors
 	adc		ax, word [Hidden_sectors + 2]	; Add the bottom half with carry of hidden sectors
@@ -45,7 +50,7 @@
 	
 .read_next_sector:					; Read a sector from the root directory
 									; If the reading fails, will reboot
-									; cx is a loop counter for how many sector to read until failure
+									; CX is a loop counter for how many sector to read until failure
 	push 	cx						; Save the number of sector for the root directory on the stack
 	push	ax						; Save the start of the root directory on the stack
 	xor		bx, bx
@@ -53,23 +58,23 @@
 	
 .check_entry:						; Check that the loaded sector contain the file we want
 	mov		cx, 11					; Directory entry's are 11 bytes long (file name + file extension = 8 + 3)
-	mov		di, bx					; es:di is the directory entry address
-	lea		si, [%1]				; Load the file name the we are checking for into the si register (ds:si)
-	repz	cmpsb					; Compare the filename in si to memory (for 11 bytes)
-	je		.found_file				; If the string matches, the found file
+	mov		di, bx					; ES:DI is the directory entry address
+	lea		si, [%1]				; Load the file name the we are checking for into the SI register (DS:SI)
+	repz	cmpsb					; Compare the filename in SI to memory (for 11 bytes)
+	je		short .found_file				; If the string matches, the found file
 									; Else try the next entry
 	add		bx, 32
 	cmp		bx, word [Bytes_per_sector]	; Have we move out of the sector
-	jne		.check_entry			; If not, then try the next entry
+	jne		short .check_entry			; If not, then try the next entry
 	
 	pop		ax
 	inc		ax						; Increment to the next logical block address 
 	pop		cx
-	loopnz	.read_next_sector		; Decrement cx counter and if not 0 then read the next sector
+	loopnz	.read_next_sector		; Decrement CX counter and if not 0 then read the next sector
 	jmp		boot_error				; Else if 0, then the file wasn't found so reboot
 .found_file:						; The stage 2 bootloader file has been found
-	mov		ax, word [es:(bx + 0x1a)]	; The directory entry stores the first cluster number of the file
-									; at byte 26 (0x1a). bx is pointing to the address of the start of
+	mov		ax, word [es:(bx + 0x1A)]	; The directory entry stores the first cluster number of the file
+									; at byte 26 (0x1A). BX is pointing to the address of the start of
 									; the directory entry, so go from there
 	mov		word [file_start], ax	; Save the start of the stage 2 bootloader file
 	
@@ -88,7 +93,7 @@
 	adc		ax, word [Hidden_sectors + 2]
 	;Read all FAT sectors into memory
 	mov		cx, word [Sectors_per_FAT]		; Read the number of sectors per FAT
-	xor		bx, bx							; Set the start offset to be 0x0
+	xor		bx, bx							; Set the start offset to be 0x00
 .read_next_fat_sector:
 	push	cx								; Save the loop counter
 	push	ax								; Save the start of the FAT
@@ -97,7 +102,7 @@
 	pop		cx
 	inc		ax								; Increment the logical block address for the next sector
 	add		bx, word [Bytes_per_sector]		; Increment by the size of the sector sector
-	loopnz	.read_next_fat_sector			; Repeatedly read each FAT into memory (cx of them)
+	loopnz	.read_next_fat_sector			; Repeatedly read each FAT into memory (CX of them)
 %endmacro
 
 ; Read a file into memory
@@ -117,7 +122,7 @@
 	; Here AX is used to set up the extra segment to point to the load segment where the 2nd stage is loaded
 	mov		ax, %1							; Set up the memory segment that will receive the file
 	mov		es, ax
-	xor		bx, bx							; Set the start offset to be 0x0
+	xor		bx, bx							; Set the start offset to be 0x00
 	mov		cx, word [file_start]			; Load the start of the file
 .read_next_file_sector:
 	; Locate the sector to read
@@ -134,7 +139,7 @@
 	
 	; Get the next sector to read
 	push	ds								; Save the previous data segment value
-	mov		dx, %2							; Make ds:si (the data segment) point to the FAT
+	mov		dx, %2							; Make DS:SI (the data segment) point to the FAT
 	mov		ds, dx
 	
 	push	bx								; Save BX as is used for multiply and divide and contains the load location
@@ -156,24 +161,24 @@
 											; Else is odd, shift the first 4 bits of word
 
 	jnz		.read_next_cluster_old			; If is even
-	and		cx, 0x0fff						; Then mask the upper 4 bits
+	and		cx, 0x0FFF						; Then mask the upper 4 bits
 	jmp		.read_next_file_cluster_done
 .read_next_cluster_old:						; If odd
 	shr		cx, 4							; Shift the 4 bits to the right 
 .read_next_file_cluster_done:
-	pop		ds								; Restore ds segment to normal
-	cmp		cx, 0xff8						; If FAT entry is 0x0ff8, then is the end of file (for FAT12)
+	pop		ds								; Restore DS segment to normal
+	cmp		cx, 0xFF8						; If FAT entry is 0x0FF8, then is the end of file (for FAT12)
 	jl		.read_next_file_sector			; If not end of file, read the next sector
 %endmacro
 
 ; Need to copy the boot sector from the first stage bootloader as contains information thats might have changed
 ; during the first stage
 %macro m_copy_boot_sector 0
-	push	ds								; Need to set ds:si to 0x0000:0x7c03
+	push	ds								; Need to set DS:SI to 0x0000:0x7C03
 	xor		ax, ax
 	mov		ds, ax
 	mov		si, boot_sector_location
-	mov		di, boot_sector					; Set es:di to location of second stage boot sector
+	mov		di, boot_sector					; Set ES:DI to location of second stage boot sector
 	mov		cx, 34							; The fist 34 bytes to copy as the rest isn't changed
 	rep		movsb
 	pop		ds
@@ -195,9 +200,10 @@
 	
 	mov		byte [boot_parameters.cursor_pos_x], dl
 	mov		byte [boot_parameters.cursor_pos_y], dh
+	mov		word [boot_parameters.memory_map_location], memory_map
 %endmacro
 
-; Set up segments to point to the data gdt table (0x10)
+; Set up segments to point to the data GDT table (0x10)
 %macro m_set_up_segments 0
 	mov		ax, 0x10
 	mov		ds, ax
@@ -205,7 +211,31 @@
 	mov		fs, ax
 	mov		gs, ax
 	mov		ss, ax
-	mov		esp, 0x2ffff
+	mov		esp, 0x2FFFF
 	mov		ebp, esp
-	;sti
+%endmacro
+
+; Parameter: the memory map table memory segment to be stores at
+%macro m_get_memory_size 1
+	mov		dl, byte [Logical_drive_number]						; Get the drive number
+	mov		byte [boot_info + multiboot_info.boot_device], dl	; Store the drive number in the multiboot structure.
+	
+	xor		eax, eax
+	xor		ebx, ebx
+	
+	m_bios_get_memory_size_E801
+	
+	mov		word [boot_info + multiboot_info.memory_low], ax
+	mov		word [boot_info + multiboot_info.memory_high], bx
+	
+	mov		ax, %1	; Set up the memory segment for where the memory map table will be loaded into
+	shr		ax, 4
+	
+	mov		es, ax
+	xor		di, di
+	
+	m_bios_get_memory_map
+	
+	mov		word [boot_info + multiboot_info.mem_map_length], si
+	mov		word [boot_info + multiboot_info.mem_map_addr], memory_map
 %endmacro

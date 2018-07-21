@@ -507,7 +507,7 @@ static void keyboard_set_lights(bool scroll_lock, bool num_lock, bool caps_lock)
  *  
  *  \param [in] regs The register of the handler.
  */
-void keyboard_handler(regs_t * regs) {
+static void keyboard_handler(regs_t * regs) {
 	(void) regs;				// Registers aren't needed.
 	
 	unsigned char scancode;

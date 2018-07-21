@@ -20,6 +20,8 @@
 #include <main.h>
 #include <rtc.h>
 #include <speaker.h>
+#include <pmm.h>
+#include <multiboot.h>
 
 #if !defined(__i386__)
 #error "This needs to be compiled with a ix86-elf compiler"
@@ -492,10 +494,27 @@ static void kernel_task(void) {
 	}
 }
 
+void pmm_test(void) {
+	uint32_t * p = (uint32_t *) pmm_alloc_block();
+	kprintf("p allocated at 0x%0x\n", p);
+	
+	uint32_t * p2 = (uint32_t *) pmm_alloc_blocks(2);
+	kprintf("Allocated 2 blocks for p2 at 0x%0x\n", p2);
+	
+	pmm_free_block(p);
+	p = (uint32_t *) pmm_alloc_block();
+	kprintf("Unallocated p to free block 1. p is reallocated to 0x%0x\n", p);
+	
+	pmm_free_block(p);
+	pmm_free_blocks(p2, 2);
+}
+
 /**
  *  \brief The kernel main entry point that initiates everything.
+ *
+ *  \param [in] boot_info The boot parameters from the bootloader.
  */
-noreturn void kernel_main(void) {
+noreturn void kernel_main(uint32_t kernel_size, multiboot_info_t * boot_info) {
 	// Get the parameters from the bootloader. The cursor position
 	boot_params params;
 	
@@ -511,6 +530,52 @@ noreturn void kernel_main(void) {
 	isr_init();
 	
 	irq_init();
+	
+	// Add on the first MB.
+	// mem_lower is the number of KB between 1MB and 16MB.
+	// mem_upper is the number of 64KB blocks above 16MB, so need to multiply by 64 to get the number of KB.
+	uint32_t mem_size = 1024 + boot_info->mem_lower + (boot_info->mem_upper * 64);
+	
+	kprintf("Initiating physical memory manager with %dKB of physical memory, mem_lower: %d, mem_upper: %d with bit map at 0x%0x\n", mem_size, boot_info->mem_lower, boot_info->mem_upper, 0x100000 + kernel_size);
+	
+	// Place the memory bit map at the end of the kernel.
+	// The kernel is placed at 1MB, so add 1MB to the size of the kernel to get the end of the kernel.
+	pmm_init(mem_size, 0x100000 + kernel_size);
+	
+	char * str_type[] = {
+		"Available",
+		"Reserved",
+		"ACPI Reclaimable",
+		"ACPI NVS",
+		"Bad memory"
+	}
+	
+	// Initiating memory regions
+	for(int i = 0; i < boot_info->mem_map_length; i++) {
+		// Sanity check if type is above 5
+		if(mem_map_addr[i].type > 5) {
+			mem_map_addr[i].type = 1;		// If so, mark it reserved
+		}
+		
+		// If start address is zero when not the first memory map, then at end so break
+		if(i > 0 && mem_map_addr[i].base_addr_lower == 0) {
+			break;
+		}
+		
+		kprintf("Region %d: Start addr: 0x%0x%0x. Length: 0x%0x%0x. Type: %d - %s\n", i, mem_map_addr[i].base_addr_upper, mem_map_addr[i].base_addr_lower, mem_map_addr[i].length_upper, mem_map_addr[i].length_lower, mem_map_addr[i].type, str_typr[mem_map_addr[i].type - 1]);
+		
+		// If type is 1 (available), then initiate the region so can be allocated
+		if(mem_map_addr[i].type == 1) {
+			pmm_init_region(mem_map_addr[i].base_addr_lower, mem_map_addr[i].length_lower)
+		}
+	}
+	
+	// Uninitialise the kernel memory region
+	pmm_uninit_region(0x100000, kernel_size);
+	
+	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
+	
+	pmm_test();
 	
 	pit_install();
 	

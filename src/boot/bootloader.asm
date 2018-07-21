@@ -3,13 +3,13 @@
 ; Using a 1440KB 3.5" Floppy for the bootloader
 ; ---------------------------------------------------------------------
 
-%define boot0_location          (0x7c00)   ; The location that BOOT0 is load to by the BIOS
-%define boot_signature          (0xaa55)   ; The boot signature that is needed at the end of the 512 bytes so that it is recognized as a boot device.
-%define fat_segment				(0x0ee0)   ; The memory location to load the FAT into memory
+%define boot0_location          (0x7C00)   ; The location that BOOT0 is load to by the BIOS
+%define boot_signature          (0xAA55)   ; The boot signature that is needed at the end of the 512 bytes so that it is recognized as a boot device.
+%define fat_segment				(0x0EE0)   ; The memory location to load the FAT into memory
 %define stage_2_load_segment    (0x0100)   ; The location of the second stage bootloader
 
 	[bits	16]             ; Tell the assembler that this is a 16bit program not 32bit
-	[org	boot0_location] ; As the bootloader is loaded at 0x7c00, all addressing will be relative to this location
+	[org	boot0_location] ; As the bootloader is loaded at 0x7C00, all addressing will be relative to this location
 
 	; Will need to jump over the FAT16 header. 3 Bytes are allowed before the header
     ; so can only use a relative/short jump.
@@ -17,7 +17,7 @@
     
 ; Need to pad to a total of 3 bytes so far.
 ; This is so to comply with the FAT16 header.
-; We could use a NOP instruction as the previous instruction (jmp) is 2 bytes and NOP is 1 byte
+; We could use a NOP instruction as the previous instruction (JMP) is 2 bytes and NOP is 1 byte
 ; See https://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 ; Bytes 0-2
 times (3 - ($ - $$)) db 0
@@ -29,7 +29,7 @@ times (3 - ($ - $$)) db 0
 %include 'macros.asm'
     
 bootloader_start:
-    ; The BIOS can load use (the bootloader) at address 0x000:7c00 or 0x7c00:0000
+    ; The BIOS can load use (the bootloader) at address 0x000:7C00 or 0x7C00:0000
 	; This is in fact the same address
 	; So we need to normalise this by using a long jump
     jmp 	long 0x0000:start_boot0_16bit
@@ -41,9 +41,9 @@ start_boot0_16bit:
 	
 	cli                        ; Disable interrupts so not mess up the declarations of the segments
 	
-	mov		byte [Logical_drive_number], dl ; Save what drive we booted from (should be 0x0) into our boot parameter block above
+	mov		byte [Logical_drive_number], dl ; Save what drive we booted from (should be 0x00) into our boot parameter block above
 	
-	mov		ax, cs             ; Set all the sectors to start to begin with. Can get this from the code segment. Should be 0x0
+	mov		ax, cs             ; Set all the sectors to start to begin with. Can get this from the code segment. Should be 0x00
 	mov     ds, ax             ; Set the data segment at the beginning of the bootloader location
 	mov		es, ax             ; Set the extra1 segment at the beginning of the bootloader location
 	mov		ss, ax             ; Set the stack segment at the beginning of the bootloader location

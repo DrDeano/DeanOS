@@ -1,6 +1,6 @@
 /**
  *  \file boot.h
- *  \brief Functions and definitions for getting parameters from the bootloader
+ *  \brief Functions and definitions for getting parameters from the bootloader.
  */
 #ifndef INCLUDE_BOOT_H
 #define INCLUDE_BOOT_H
@@ -32,12 +32,12 @@ typedef struct {
 } __attribute__((__packed__)) boot_params;
 
 /**
- *  \brief Get the boot parameters from the bootloader.
+ *  \brief Get the boot parameters from the bootloader and add them to the structure give..
+ *  
+ *  \param [in] param A pointer to a boot_params structure to be filled with the parameter from the
+ *  bootloader.
  *  
  *  \return A pointer to the a boot_params structure that holds data at the address location
- *  
- *  \details The address given will be a set address that will be the same for the ADDRESS defined
- *  and the address that the bootloader places the information for the kernel.
  */
 boot_params * get_boot_params(boot_params * param);
 

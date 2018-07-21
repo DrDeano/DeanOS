@@ -3,25 +3,55 @@
 #include <irq.h>
 #include <interrupt.h>
 #include <portio.h>
+#include <tty.h>
+#include <pic.h>
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <tty.h>
 
+/**
+ * \brief The register location for returning the century. As some CMOS chips don't support the
+ * century register, and accessing it could lead to undefined results. The CMOS will set this if
+ * there is a century register, else it will stay zero. So check this value, and if not zero, then
+ * the CMOS supports the century register and can get the value from he register, else will just
+ * have to add on the century to the year as the year is only the lower 2 numbers.
+ */
 static uint8_t century_reg = 0;
 
+/**
+ *  \brief Get whether the update flag is set or not. The update flag is set when the date and time
+ *  in the CMOS chip is being updated. If the date and time is being updated, then will have to
+ *  wait until the update flag is unset. If trying to get the current date and time when the update
+ *  flag is set, this could lead to inconsistent values.
+ *  
+ *  \return If return a non zero value, then the update flag is set, and shouldn't get the current
+ *  date and time. If return zero, then the flag isn't set and can get the current date and time.
+ *  This function will either return 0x00 or 0x80.
+ */
 static uint8_t get_update_in_progress_flag(void) {
 	out_port_byte(CMOS_ADDRESS, CMOS_REG_STATUS_A);
 	return (in_port_byte(CMOS_DATA) & 0x80);
 }
 
-static uint8_t get_data_from_rct_reg(const uint8_t reg) {
+/**
+ *  \brief Get data from a register from the CMOS chip.
+ *  
+ *  \parma [in] reg The register to get the data from.
+ *  
+ *  \return The data in the register returned.
+ */
+static uint8_t get_data_from_rtc_reg(const uint8_t reg) {
 	out_port_byte(CMOS_ADDRESS, reg);
 	return in_port_byte(CMOS_DATA);
 }
 
+/**
+ *  \brief Calculate the day of the week from the supplied date.
+ *  
+ *  \parma [in] date The date to calculate the day of the week from.
+ *  
+ *  \return The pointer the date give as the parameter.
+ */
 static rtc_date_time_t * day_of_week(rtc_date_time_t * date) {
 	static const int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 	date->year -= date->month < 3;
@@ -54,15 +84,15 @@ rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h, const bo
 	
 	while(get_update_in_progress_flag());
 	
-	second = get_data_from_rct_reg(CMOS_REG_SECOND);
-	minute = get_data_from_rct_reg(CMOS_REG_MINUTE);
-	hour = get_data_from_rct_reg(CMOS_REG_HOUR);
-	day = get_data_from_rct_reg(CMOS_REG_DAY);
-	month = get_data_from_rct_reg(CMOS_REG_MONTH);
-	year = get_data_from_rct_reg(CMOS_REG_YEAR);
+	second = get_data_from_rtc_reg(CMOS_REG_SECOND);
+	minute = get_data_from_rtc_reg(CMOS_REG_MINUTE);
+	hour = get_data_from_rtc_reg(CMOS_REG_HOUR);
+	day = get_data_from_rtc_reg(CMOS_REG_DAY);
+	month = get_data_from_rtc_reg(CMOS_REG_MONTH);
+	year = get_data_from_rtc_reg(CMOS_REG_YEAR);
 	
 	if(century_reg) {
-		century = get_data_from_rct_reg(century_reg);
+		century = get_data_from_rtc_reg(century_reg);
 	} else {
 		century = -1;
 	}
@@ -80,15 +110,15 @@ rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h, const bo
 		
 		while(get_update_in_progress_flag());
 		
-		second = get_data_from_rct_reg(CMOS_REG_SECOND);
-		minute = get_data_from_rct_reg(CMOS_REG_MINUTE);
-		hour = get_data_from_rct_reg(CMOS_REG_HOUR);
-		day = get_data_from_rct_reg(CMOS_REG_DAY);
-		month = get_data_from_rct_reg(CMOS_REG_MONTH);
-		year = get_data_from_rct_reg(CMOS_REG_YEAR);
+		second = get_data_from_rtc_reg(CMOS_REG_SECOND);
+		minute = get_data_from_rtc_reg(CMOS_REG_MINUTE);
+		hour = get_data_from_rtc_reg(CMOS_REG_HOUR);
+		day = get_data_from_rtc_reg(CMOS_REG_DAY);
+		month = get_data_from_rtc_reg(CMOS_REG_MONTH);
+		year = get_data_from_rtc_reg(CMOS_REG_YEAR);
 		
 		if(century_reg) {
-			century = get_data_from_rct_reg(century_reg);
+			century = get_data_from_rtc_reg(century_reg);
 		} else {
 			century = -1;
 		}
@@ -96,7 +126,7 @@ rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h, const bo
             (last_day != day) || (last_month != month) || (last_year != year) ||
             (last_century != century));
 	
-	reg_B = get_data_from_rct_reg(CMOS_REG_STATUS_B);
+	reg_B = get_data_from_rtc_reg(CMOS_REG_STATUS_B);
 	
 	// Convert BCD to binary if necessary
 	if(!(reg_B & 0x04)) {
@@ -129,10 +159,7 @@ rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h, const bo
 	if(century_reg) {
 		year += century * 100;
 	} else {
-		year += (CURRENT_YEAR / 100) * 100;
-		if(year < CURRENT_YEAR) {
-			year += 100;
-		}
+		year += CURRENT_CENTURY;
 	}
 	
 	date->second = second;
@@ -193,17 +220,27 @@ static void rtc_handler(regs_t * regs) {
 	(void) regs;
 	set_display_time();					// May change to update internal time and have get time function and other function poll this.
 	
+	// Why need this?
 	out_port_byte(CMOS_ADDRESS, 0x0C);	// select register C
 	in_port_byte(CMOS_DATA);			// just throw away contents
 }
 
 void rtc_init(void) {
-	irq_install_handler(8, rtc_handler);
+	// Install the handler for the real time clock
+	irq_install_handler(PIC_IRQ_CMOS_REALT_TIME_CLOCK, rtc_handler);
+	
+	// Set the rate of interrupts to every half a second.
 	set_rate(15);
+	
+	// 
+	
+	// Disable interrupts
 	interrupt_disable();
 	out_port_byte(CMOS_ADDRESS, 0x8B);			// select register B, and disable NMI
 	uint8_t prev = in_port_byte(CMOS_DATA);	// read the current value of register B
 	out_port_byte(CMOS_ADDRESS, 0x8B);			// set the index again (a read will reset the index to register D)
 	out_port_byte(CMOS_DATA, prev | 0x40);	// write the previous value ORed with 0x40. This turns on bit 6 of register B
+	
+	// Re-enable interrupts
 	interrupt_enable();
 }

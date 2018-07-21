@@ -99,7 +99,7 @@ void pit_setup_counter(uint16_t freq, uint8_t counter, uint8_t mode) {
  *  
  *  \param [in] regs The register of the CPU when the interrupt was called
  */
-void pit_handler(regs_t * regs) {
+static  void pit_handler(regs_t * regs) {
 	(void) regs;		// Not using the registers
 	pit_ticks++;		// Increment tick count
 }

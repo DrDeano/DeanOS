@@ -1,22 +1,22 @@
 ; Print a null terminated string to the screen
-; ds:si is the location of the string
+; DS:SI is the location of the string
 ; Input:
-;   si - pointer to the string to be printed in register si
+;   SI - pointer to the string to be printed in register SI
 print_string_with_new_line:
     pusha				; Push all registers onto the stack
-    mov     ah, 0x0e	; Specify the teletype output function
+    mov     ah, 0x0E	; Specify the teletype output function
 	xor		bx, bx
 .loop:
-    lodsb				; Load byte at address si into al and increment si
+    lodsb				; Load byte at address SI into AL and increment SI
     cmp	    al, 0		; If it the end of the null-terminated string
     je      .done		; Then exit
-    int     0x10		; Else print the character in al as an interrupt into the BIOS
+    int     0x10		; Else print the character in AL as an interrupt into the BIOS
     jmp     short .loop ; Repeat for next character
 .done:
 	; Print the line feed and carriage return
-	mov		al, 0x0a	; Teletype print sub function(0x0e), Line feed (0x0a)
+	mov		al, 0x0A	; Teletype print sub function(0x0E), Line feed (0x0A)
     int     0x10
-    mov     al, 0x0d	; Carriage return
+    mov     al, 0x0D	; Carriage return
     int     0x10
     popa				; Pop the register of the stack
     ret					; And return to caller
@@ -34,11 +34,11 @@ reboot:
 	
 ; Read a sector from the disk
 ; es:bx is the location of the buffer that the data is read into
-; As reads often fail, it will try 4 times to read from the disk. The counter is stored in cx.
-; With the data buffer at es:bx
+; As reads often fail, it will try 4 times to read from the disk. The counter is stored in CX.
+; With the data buffer at ES:BX
 ; Input:
-;	ax    - The logical block address (LBA)
-;	es:bx - The buffer location which the sector will be read into
+;	AX    - The logical block address (LBA)
+;	ES:BX - The buffer location which the sector will be read into
 read_sector:
 	xor		cx, cx					; Set the counter to 0
 .read:
@@ -53,33 +53,33 @@ read_sector:
 ; (3) Head     = (LBA / SectorsPerTrack) mod NumHeads
 ;
 ; Input:
-;	ax - the logical block address
-; Output: These are used for the 0x13 BIOS interrupt to read from the disk along with es:bx and ax
-;	ch - Lower 8 bits of cylinder
-;	cl - Upper 2 bits of cylinder and 6 bits for the sector
-;	dh - The head number
-;	dl - The drive number/ID
+;	AX - the logical block address
+; Output: These are used for the 0x13 BIOS interrupt to read from the disk along with ES:BX and ax
+;	CH - Lower 8 bits of cylinder
+;	CL - Upper 2 bits of cylinder and 6 bits for the sector
+;	DH - The head number
+;	DL - The drive number/ID
 .lba_to_hcs:
 	push	bx							; Save the buffer location
 	
 	;mov		bx, word [Sectors_per_track]	; Get the sectors per track
-	xor		dx, dx						; Set dx to 0x0 (part of operand for DIV instruction and needs to be 0x0)
-	div		word [Sectors_per_track]	; Divide (dx:ax / Sectors_per_track)
-										; Quotient (ax)  - LBA / SectorsPerTrack
-										; Remainder (dx) - LBA mod SectorsPerTrack
+	xor		dx, dx						; Set DX to 0x0 (part of operand for DIV instruction and needs to be 0x00)
+	div		word [Sectors_per_track]	; Divide (DX:AX / Sectors_per_track)
+										; Quotient (AX)  - LBA / SectorsPerTrack
+										; Remainder (DX) - LBA mod SectorsPerTrack
 									
 	inc		dx							; (1) Sector = (LBA mod SectorsPerTrack) + 1
 	mov		cl, dl						; Store sector in cl as defined for the output and for the 0x13 BIOS interrupt
 	
 	;mov		bx, word [Head_count]	; Get the number of heads
 	xor		dx, dx
-	div		word [Head_count]			; Quotient (ax)  - Cylinder = (LBA / SectorsPerTrack) / NumHeads
-										; Remainder (dx) - Head     = (LBA / SectorsPerTrack) mod NumHeads
+	div		word [Head_count]			; Quotient (AX)  - Cylinder = (LBA / SectorsPerTrack) / NumHeads
+										; Remainder (DX) - Head     = (LBA / SectorsPerTrack) mod NumHeads
 	
 	mov		ch, al						; Store cylinder in ch as defined for the output and for the 0x13 BIOS interrupt
-	mov		dh, dl						; Store head in dh as defined for the output and for the 0x13 BIOS interrupt
+	mov		dh, dl						; Store head in DH as defined for the output and for the 0x13 BIOS interrupt
 	
-	mov		dl, byte [Logical_drive_number]	; Store drive number in dl as defined for the output and for the 0x13 BIOS interrupt
+	mov		dl, byte [Logical_drive_number]	; Store drive number in DL as defined for the output and for the 0x13 BIOS interrupt
 	
 	pop		bx							; Restore the buffer location
 	

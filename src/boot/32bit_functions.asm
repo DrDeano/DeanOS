@@ -10,26 +10,26 @@
 ;   BL - The character to print
 print_char_32:
 	pusha
-	mov		edi, VIDMEM			; Let EDI point to the start of video memory
-	xor		eax, eax			; Clear EAX
+	mov		edi, VIDMEM				; Let EDI point to the start of video memory
+	xor		eax, eax				; Clear EAX
 	
 	mov		ecx, COLUMNS
 	mov		al, byte [boot_parameters.cursor_pos_y]	; Get the y position
-	mul		ecx					; Multiply by the number of columns (EAX = y * COLUMNS)
+	mul		ecx						; Multiply by the number of columns (EAX = y * COLUMNS)
 	
 	xor		ecx, ecx
 	mov		cl, byte [boot_parameters.cursor_pos_x]	; Get the x position
-	add		eax, ecx			; Add the x position to (y * COLUMS)
-	shl		eax, 1				; Multiply by 2 as 2 bytes per character
+	add		eax, ecx				; Add the x position to (y * COLUMS)
+	shl		eax, 1					; Multiply by 2 as 2 bytes per character
 	
-	add		edi, eax			; Add the offset to the video memory address
+	add		edi, eax				; Add the offset to the video memory address
 	
-	cmp		bl, 0x0A			; Is it a new line
+	cmp		bl, 0x0A				; Is it a new line
 	je		short .new_line
 	
-	mov		dl, bl				; Get the character to print
-	mov		dh, CHAR_ATTRIB		; Add the character attribute
-	mov		word [edi], dx		; Write to the video memory
+	mov		dl, bl					; Get the character to print
+	mov		dh, CHAR_ATTRIB			; Add the character attribute
+	mov		word [edi], dx			; Write to the video memory
 	
 	inc		byte [boot_parameters.cursor_pos_x]		; Increment the x position
 	jmp		short .print_done
@@ -51,7 +51,7 @@ print_string_32:
 .print_loop:
 	mov		bl, byte [esi]		; Get the character to print
 	cmp		bl, 0				; Is it null
-	je		.print_end			; Then finish
+	je		short .print_end			; Then finish
 	
 	call	print_char_32		; Print the character
 	
