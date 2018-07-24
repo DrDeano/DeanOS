@@ -51,7 +51,7 @@ static void terminal_scroll(void) {
 		temp = terminal_row - 25 + 1;
 		
 		// Move all rows up one
-		memmove(terminal_buffer + (TERMINAL_ROW_MIN * 80), terminal_buffer + (temp * 80) + (TERMINAL_ROW_MIN * 80), (25 - temp) * 80 * 2);
+		memmove(terminal_buffer + ((TERMINAL_ROW_MIN - 1) * 80), terminal_buffer + (temp * 80) + ((TERMINAL_ROW_MIN - 1) * 80), (25 - temp) * 80 * 2);
 		
 		// Set the last row to blanks
 		for(int i = 0; i < 80; i++) {

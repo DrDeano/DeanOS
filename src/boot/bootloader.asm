@@ -5,8 +5,9 @@
 
 %define boot0_location          (0x7C00)   ; The location that BOOT0 is load to by the BIOS
 %define boot_signature          (0xAA55)   ; The boot signature that is needed at the end of the 512 bytes so that it is recognized as a boot device.
-%define fat_segment				(0x0EE0)   ; The memory location to load the FAT into memory
-%define stage_2_load_segment    (0x0100)   ; The location of the second stage bootloader
+%define fat_segment				(0x0050)   ; The memory location to load the FAT into memory
+;%define stage_2_load_segment    (0x0200)   ; The location of the second stage bootloader
+%define stage_2_load_segment    (0x07E0)
 
 	[bits	16]             ; Tell the assembler that this is a 16bit program not 32bit
 	[org	boot0_location] ; As the bootloader is loaded at 0x7C00, all addressing will be relative to this location
@@ -75,7 +76,7 @@ start_boot0_16bit:
 	; Start the second stage bootloader
 	; ------------------------------------------------------------------------
 	
-    ; Jump to second stage start of code:    
+    ; Jump to second stage start of code:
     jmp     long stage_2_load_segment:0000h
 
 

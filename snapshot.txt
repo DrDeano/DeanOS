@@ -1,0 +1,25 @@
+   _____                            ____     _____            ___         ___
+  |  __ \                          / __ \   / ____|          / _ \       |__ \
+  | |  | |   ___    __ _   _ __   | |  | | | (___   __   __ | | | |         ) |
+  | |  | |  / _ \  / _` | | '_ \  | |  | |  \___ \  \ \ / / | | | |        / /
+  | |__| | |  __/ | (_| | | | | | | |__| |  ____) |  \ V /  | |_| |  _    / /_
+  |_____/   \___|  \__,_| |_| |_|  \____/  |_____/    \_/    \___/  (_)  |____|
+
+Initialising IDT at 0x106120
+Initialising interrupt service routines
+Initialising interrupt requests
+Initiating pmm with 32768KB (32MB) of physical memory, mem_lower: 15360KB (15MB)
+, mem_upper: 256 64KB blocks
+Memory map addr: 0x00001600. Memory map length: 6
+Reg 0: Start addr: 0x0000000000000000 Len: 0x000000000009f000 Type: 1-Available
+Reg 1: Start addr: 0x000000000009f000 Len: 0x0000000000001000 Type: 2-Reserved
+Reg 2: Start addr: 0x00000000000e8000 Len: 0x0000000000018000 Type: 2-Reserved
+Reg 3: Start addr: 0x0000000000100000 Len: 0x0000000001ef0000 Type: 1-Available
+Reg 4: Start addr: 0x0000000001ff0000 Len: 0x0000000000010000 Type: 3-ACPI Recla
+imable
+Reg 5: Start addr: 0x00000000fffc0000 Len: 0x0000000000040000 Type: 2-Reserved
+
+PANIC:
+Stop
+
+Haltedÿ

@@ -1,5 +1,4 @@
 #include <keyboard.h>
-#include <ps2.h>
 #include <pic.h>
 #include <regs_t.h>
 #include <stdio.h>

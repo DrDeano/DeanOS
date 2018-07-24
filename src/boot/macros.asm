@@ -191,7 +191,7 @@
 	mov		cr0, eax
 %endmacro
 
-%macro m_save_parameters 0
+%macro m_save_cursor 0
 	mov		word [boot_parameters.signature], SIGNATURE
 	
 	mov		ah, 0x03
@@ -200,7 +200,8 @@
 	
 	mov		byte [boot_parameters.cursor_pos_x], dl
 	mov		byte [boot_parameters.cursor_pos_y], dh
-	mov		word [boot_parameters.memory_map_location], memory_map
+	;mov		ax, word [kernel_size]
+	;mov		word [boot_parameters.kernel_len], ax
 %endmacro
 
 ; Set up segments to point to the data GDT table (0x10)
@@ -216,26 +217,29 @@
 %endmacro
 
 ; Parameter: the memory map table memory segment to be stores at
-%macro m_get_memory_size 1
-	mov		dl, byte [Logical_drive_number]						; Get the drive number
-	mov		byte [boot_info + multiboot_info.boot_device], dl	; Store the drive number in the multiboot structure.
-	
+%macro m_get_memory_size 0
 	xor		eax, eax
 	xor		ebx, ebx
 	
 	m_bios_get_memory_size_E801
 	
-	mov		word [boot_info + multiboot_info.memory_low], ax
-	mov		word [boot_info + multiboot_info.memory_high], bx
+	mov		word [boot_parameters.memory_lower], ax
+	mov		word [boot_parameters.memory_upper], bx
 	
-	mov		ax, %1	; Set up the memory segment for where the memory map table will be loaded into
-	shr		ax, 4
+	push	es
+	push	di
 	
+	xor		ax, ax
+	mov		ax, memory_map_segment	; Set up the memory segment for where the memory map table will be loaded into
 	mov		es, ax
+	
 	xor		di, di
 	
 	m_bios_get_memory_map
 	
-	mov		word [boot_info + multiboot_info.mem_map_length], si
-	mov		word [boot_info + multiboot_info.mem_map_addr], memory_map
+	pop		di
+	pop		es
+	
+	mov		word [boot_parameters.memory_map_length], si
+	mov		dword [boot_parameters.memory_map_address], memory_map_location
 %endmacro

@@ -1,9 +1,13 @@
 #include <pmm.h>
 
+#include <string.h>
+#include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 /**
- *  \brief The total amount of physical memory that we have to work with. This is set by the BIOS
+ *  \brief The total amount of physical memory that we have to work with. This is set by the BIOS 
  *  memory map.
  */
 static uint32_t total_memory_size;
@@ -23,6 +27,10 @@ static uint32_t max_blocks;
  *  and are in use.
  */
 static uint32_t * memory_bit_map;
+
+static uint32_t memory_bit_map_block_offset;
+
+static uint32_t memory_bit_map_block_size;
 
 static void set_map_bit(uint32_t bit) {
 	memory_bit_map[bit / 32] |= (1 << (bit % 32));
@@ -44,7 +52,7 @@ static bool get_first_free_block(uint32_t * frame) {
 		if(memory_bit_map[i] != 0xFFFFFFFF) {
 			for(uint8_t j = 0; j < 32; j++) {
 				if(!get_map_bit((i * 32) + j)) {
-					(*frame) = (i * 32) + j);
+					(*frame) = ((i * 32) + j);
 					return true;
 				}
 			}
@@ -72,13 +80,13 @@ static bool get_first_free_blocks(uint32_t * frame, uint32_t num_blocks) {
 					
 					uint32_t free = 0;
 					
-					for(int k = 0; k < num_blocks; k++) {
+					for(uint32_t k = 0; k < num_blocks; k++) {
 						if(!get_map_bit(starting_bit + k)) {
 							free++;
 						}
 						
 						if(free == num_blocks) {
-							(*frame) = (i * 32) + j);
+							(*frame) = ((i * 32) + j);
 							return true;
 						}
 					}
@@ -102,7 +110,7 @@ uint32_t pmm_get_free_blocks(void) {
 }
 
 void * pmm_alloc_block(void) {
-	if(get_free_blocks() <= 0) {
+	if(pmm_get_free_blocks() <= 0) {
 		return NULL;		// No more memory
 	}
 	
@@ -114,11 +122,11 @@ void * pmm_alloc_block(void) {
 	set_map_bit(frame);
 	used_blocks++;
 	
-	return (void *) frame * PMM_BLOCK_SIZE;
+	return (void *) (frame * PMM_BLOCK_SIZE);
 }
 
 void * pmm_alloc_blocks(uint32_t num_blocks) {
-	if(get_free_blocks() == 0) {
+	if(pmm_get_free_blocks() == 0) {
 		return NULL;		// No more memory
 	}
 	
@@ -133,20 +141,20 @@ void * pmm_alloc_blocks(uint32_t num_blocks) {
 	
 	used_blocks += num_blocks;
 	
-	return (void *) frame * PMM_BLOCK_SIZE;
+	return (void *) (frame * PMM_BLOCK_SIZE);
 }
 
-void pmm_dealloc_block(void * ptr) {
+void pmm_free_block(void * ptr) {
 	uint32_t frame = (uint32_t) ptr / PMM_BLOCK_SIZE;
 	
 	unset_map_bit(frame);
 	used_blocks--;
 }
 
-void pmm_dealloc_blocks(void * ptr, uint32_t num_blocks) {
+void pmm_free_blocks(void * ptr, uint32_t num_blocks) {
 	uint32_t frame = (uint32_t) ptr / PMM_BLOCK_SIZE;
 	
-	for(int i = 0; i < num_blocks; i++) {
+	for(uint32_t i = 0; i < num_blocks; i++) {
 		unset_map_bit(frame + i);
 	}
 	
@@ -157,31 +165,38 @@ void pmm_dealloc_blocks(void * ptr, uint32_t num_blocks) {
 void pmm_init_region(uint32_t base, uint32_t length) {
 	uint32_t block_offset = base / PMM_BLOCK_SIZE;
 	
-	for(uint32_t num_blocks = length / PMM_BLOCK_SIZE; num_blocks > 0; num_blocks--) {
+	for(uint32_t num_blocks = ((length - 1) / PMM_BLOCK_SIZE) + 1; num_blocks > 0; num_blocks--) {
+		// If trying to init with in the bit map, don't
+		// Don't init block zero
+		if(((block_offset >= memory_bit_map_block_offset) && (block_offset <= (memory_bit_map_block_offset + memory_bit_map_block_size))) || block_offset == 0) {
+			block_offset++;
+			continue;
+		}
 		unset_map_bit(block_offset++);
-		used_blocks++;
+		used_blocks--;
 	}
-	
-	// Fist block is never free so alloc can't allocate block zero as this will be used for 'out of memory'
-	set_map_bit(0);
 }
 	
 void pmm_uninit_region(uint32_t base, uint32_t length) {
 	uint32_t block_offset = base / PMM_BLOCK_SIZE;
 	
-	for(uint32_t num_blocks = length / PMM_BLOCK_SIZE; num_blocks > 0; num_blocks--) {
-		unset_map_bit(block_offset--);
-		used_blocks--;
+	for(uint32_t num_blocks = ((length - 1) / PMM_BLOCK_SIZE) + 1; num_blocks > 0; num_blocks--) {
+		set_map_bit(block_offset++);
+		used_blocks++;
 	}
 }
 
-// mem_size is in KB?
 void pmm_init(uint32_t mem_size, uint32_t * bit_map) {
-	memory_size = mem_size;
+	total_memory_size = mem_size;
 	memory_bit_map = bit_map;
+	memory_bit_map_block_offset = (uint32_t) bit_map / PMM_BLOCK_SIZE;
+	// (((mem_size * 1024) / 4096) / 8) / 4096
+	memory_bit_map_block_size = (((mem_size * 1024) - 1) / 134217728);
 	max_blocks = (mem_size * 1024) / PMM_BLOCK_SIZE;
 	used_blocks = max_blocks;
 	
 	// Set all block to be used as will later set the available blocks
 	memset(memory_bit_map, 0xFF, max_blocks / PMM_BLOCKS_PER_BYTE);
+	
+	kprintf("pmm_init: Max blocks: %d Used blocks: %d Bit map size: %d Bytes Num blocks: %d Block offset: %d\n", max_blocks, used_blocks, max_blocks / PMM_BLOCKS_PER_BYTE, memory_bit_map_block_size, memory_bit_map_block_offset);
 }

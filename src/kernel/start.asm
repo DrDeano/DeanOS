@@ -7,7 +7,7 @@
 extern	kernel_main
 
 start_kernel:
-    jmp		kernel_main
+    jmp		long kernel_main
 halt:
 	cli
 	hlt

@@ -21,7 +21,6 @@
 #include <rtc.h>
 #include <speaker.h>
 #include <pmm.h>
-#include <multiboot.h>
 
 #if !defined(__i386__)
 #error "This needs to be compiled with a ix86-elf compiler"
@@ -52,9 +51,10 @@ noreturn void panic(const char * format, ...) {
 	va_end(args);
 
 	// Halt forever.
-	__asm__ __volatile__ ("hlt");
-	while (1) {
+	while(1) {
+		__asm__ __volatile__ ("sti");
 		__asm__ __volatile__ ("hlt");
+		__asm__ __volatile__ ("cli");
 	}
 	__builtin_unreachable();
 }
@@ -497,31 +497,47 @@ static void kernel_task(void) {
 void pmm_test(void) {
 	uint32_t * p = (uint32_t *) pmm_alloc_block();
 	kprintf("p allocated at 0x%0x\n", p);
+	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
 	uint32_t * p2 = (uint32_t *) pmm_alloc_blocks(2);
 	kprintf("Allocated 2 blocks for p2 at 0x%0x\n", p2);
+	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
 	pmm_free_block(p);
 	p = (uint32_t *) pmm_alloc_block();
 	kprintf("Unallocated p to free block 1. p is reallocated to 0x%0x\n", p);
+	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
 	pmm_free_block(p);
 	pmm_free_blocks(p2, 2);
+	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 }
 
 /**
  *  \brief The kernel main entry point that initiates everything.
- *
- *  \param [in] boot_info The boot parameters from the bootloader.
  */
-noreturn void kernel_main(uint32_t kernel_size, multiboot_info_t * boot_info) {
+noreturn void kernel_main(void) {
 	// Get the parameters from the bootloader. The cursor position
 	boot_params params;
+	
+	char * str_type[] = {
+		"Available",
+		"Reserved",
+		"ACPI Reclaim",
+		"ACPI NVS",
+		"Bad memory"
+	};
 	
 	get_boot_params(&params);
 	
 	/* Initialize terminal interface */
 	terminal_initialise(&params);
+	
+	if(params.sig == 0) {
+		panic("Unable to get parameters from bootloader\n");
+	}
+	
+	kprintf("Kernel size: %u bytes\n", params.kernel_size);
 	
 	gdt_init();
 	
@@ -534,48 +550,47 @@ noreturn void kernel_main(uint32_t kernel_size, multiboot_info_t * boot_info) {
 	// Add on the first MB.
 	// mem_lower is the number of KB between 1MB and 16MB.
 	// mem_upper is the number of 64KB blocks above 16MB, so need to multiply by 64 to get the number of KB.
-	uint32_t mem_size = 1024 + boot_info->mem_lower + (boot_info->mem_upper * 64);
+	uint32_t mem_size = 1024 + params.memory_lower + (params.memory_upper * 64);
 	
-	kprintf("Initiating physical memory manager with %dKB of physical memory, mem_lower: %d, mem_upper: %d with bit map at 0x%0x\n", mem_size, boot_info->mem_lower, boot_info->mem_upper, 0x100000 + kernel_size);
+	uint32_t mem_map_len = params.memory_map_length + 0;
+	
+	memory_map_entry_t * mem_map = (memory_map_entry_t *) params.memory_map;
+	
+	kprintf("Initiating pmm with %uKB (%uMB) of physical memory, mem_lower: %uKB (%uMB), mem_upper: %u 64KB blocks (%uMB)\n", mem_size, mem_size / 1024, params.memory_lower, params.memory_lower / 1024, params.memory_upper, params.memory_upper / 16);
+	
+	kprintf("Memory map addr: 0x%08p. Memory map length: %u\n", mem_map, mem_map_len);
 	
 	// Place the memory bit map at the end of the kernel.
 	// The kernel is placed at 1MB, so add 1MB to the size of the kernel to get the end of the kernel.
-	pmm_init(mem_size, 0x100000 + kernel_size);
-	
-	char * str_type[] = {
-		"Available",
-		"Reserved",
-		"ACPI Reclaimable",
-		"ACPI NVS",
-		"Bad memory"
-	}
+	//pmm_init(mem_size, (uint32_t *) (0x100000 + params.kernel_size));
+	pmm_init(mem_size, (uint32_t *) 0x0000);
 	
 	// Initiating memory regions
-	for(int i = 0; i < boot_info->mem_map_length; i++) {
+	for(uint32_t i = 0; i < mem_map_len; i++) {
 		// Sanity check if type is above 5
-		if(mem_map_addr[i].type > 5) {
-			mem_map_addr[i].type = 1;		// If so, mark it reserved
+		if(mem_map[i].type > 5) {
+			mem_map[i].type = 1;		// If so, mark it reserved
 		}
 		
-		// If start address is zero when not the first memory map, then at end so break
-		if(i > 0 && mem_map_addr[i].base_addr_lower == 0) {
+		// If start address is zero when not the first memory map, then at end so break. Shouldn't need to as got the number of the memory map entries.
+		if(i > 0 && mem_map[i].base_addr_lower == 0 && mem_map[i].base_addr_upper == 0) {
 			break;
 		}
 		
-		kprintf("Region %d: Start addr: 0x%0x%0x. Length: 0x%0x%0x. Type: %d - %s\n", i, mem_map_addr[i].base_addr_upper, mem_map_addr[i].base_addr_lower, mem_map_addr[i].length_upper, mem_map_addr[i].length_lower, mem_map_addr[i].type, str_typr[mem_map_addr[i].type - 1]);
+		kprintf("%u: Start addr: 0x%08X%08X Len: 0x%08X%08X Type: %u-%s\n", i, mem_map[i].base_addr_upper, mem_map[i].base_addr_lower, mem_map[i].length_upper, mem_map[i].length_lower, mem_map[i].type, str_type[mem_map[i].type - 1]);
 		
 		// If type is 1 (available), then initiate the region so can be allocated
-		if(mem_map_addr[i].type == 1) {
-			pmm_init_region(mem_map_addr[i].base_addr_lower, mem_map_addr[i].length_lower)
+		if(mem_map[i].type == 1) {
+			pmm_init_region(mem_map[i].base_addr_lower, mem_map[i].length_lower);
 		}
 	}
 	
 	// Uninitialise the kernel memory region
-	pmm_uninit_region(0x100000, kernel_size);
+	pmm_uninit_region(0x100000, params.kernel_size);
 	
-	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
+	kprintf("Total number of blocks: %u. Used blocks: %u. Free blocks: %u\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
-	pmm_test();
+	//pmm_test();
 	
 	pit_install();
 	

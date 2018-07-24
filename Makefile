@@ -13,7 +13,8 @@ FLOPPY = bootloader.flp
 CMD = cmd.exe /c
 
 EMULATOR = qemu-system-i386
-EMULATOR_FLAGS = -fda $(BIN)/$(FLOPPY) -curses
+EMULATOR_FLAGS = -fda $(BIN)/$(FLOPPY) -curses -m 2G
+#EMULATOR_FLAGS = -fda $(BIN)/$(FLOPPY) -curses
 #EMULATOR_FLAGS = -drive media=disk,format=raw,file=$(OUTPUT_IMAGE) -curses
 
 EMULATOR_FLAGS_DEBUG = -s -S -fda $(BIN)/$(FLOPPY) -curses

@@ -400,11 +400,11 @@ int kvprintf(const char * format, va_list args) {
 						break;
 					
 					case 'x':
-						written += kprint_hex(va_arg(args, uint64_t), false, width);
+						written += kprint_hex(va_arg(args, uint32_t), false, width);
 						break;
 					
 					case 'X':
-						written += kprint_hex(va_arg(args, uint64_t), true, width);
+						written += kprint_hex(va_arg(args, uint32_t), true, width);
 						break;
 					case 'o':
 						/**
@@ -422,10 +422,6 @@ int kvprintf(const char * format, va_list args) {
 						break;
 					
 					case 'p':
-						/**
-						 *  \todo
-						 */
-						
 						ptr = (void *) va_arg(args, void *);
 						
 						if (ptr == NULL) { // Print '(null)'
@@ -437,7 +433,6 @@ int kvprintf(const char * format, va_list args) {
 						} else { // Print as a hex number
 							written += kprint_hex((uint32_t) ptr, false, width);
 						}
-						
 						break;
 					
 					case 'a':

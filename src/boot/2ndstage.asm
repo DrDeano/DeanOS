@@ -1,28 +1,32 @@
 ; ------------------------------------------------------------
 ; Stage 2 of the bootloader
 ; ------------------------------------------------------------
-%define boot_sector_location    (0x7c03)	; The location of the boot sector
-%define fat_segment				(0x0ee0)	; The memory location to load the FAT into memory
-%define stage_2_location        (0x1000)	; The location of the second stage bootloader
-%define kernel_target_segment   (0x2000)	; The target location for the kernel to be loaded. Above 1MB.
+%define boot_sector_location    (0x7C03)	; The location of the boot sector
+%define fat_segment				(0x0050)	; The memory location to load the FAT into memory
+;%define stage_2_location        (0x2000)	; The location of the second stage bootloader
+%define stage_2_location        (0x7E00)
 
-%define kernel_location			(0x20000)
-%define kernel_target_location	(0x100000)
-;%define kernel_size				(4668)
+%define kernel_load_segment		(0x3000)	; The segment when the kernel is loaded by the bootloader before A20 is enabled so can access above 1MB
+%define kernel_load_location	(0x30000)	; The location when the kernel is loaded by the bootloader before A20 is enabled so can access above 1MB
+%define kernel_target_location	(0x100000)	; The target location for the kernel to be loaded. Above 1MB.
 
-%define kernel_parameters		(0x7000)
-%define SIGNATURE				(0x8a3c)
+%define memory_map_location		(0x20000)	; This is where the memory map is loaded into. At bottom of 2nd stage bootloader
+%define memory_map_segment		(0x02000)
+
+%define boot_params_location	(0x7000)	; The location where the boot parameters are save to for the kernel
+%define SIGNATURE				(0x8A3C)	; The signature of the parameters to test for valid parameters
 
 	[bits	16]					; Tell the assembler that this is a 16bit program not 32bit
 	[org	stage_2_location]
 
 	jmp		stage_2_bootload_start
 
-
 times (3 - ($ - $$)) db 0
 
 boot_sector:
 %include 'fat_descripter.asm'
+
+; Macros to make code more readable. This doesn't take up memory here as they are copied where they are used
 
 %include 'macros.asm'
 %include 'descriptors_macros.asm'
@@ -39,23 +43,31 @@ stage_2_bootload_start:
 	; Copy the boot sector
 	m_copy_boot_sector
 	
-	m_find_file kernel_filename, kernel_target_segment
+	; Find the kernel file
+	m_find_file kernel_filename, kernel_load_segment
 	
-	m_read_file kernel_target_segment, fat_segment
+	; Read the kernel into the load segment
+	m_read_file kernel_load_segment, fat_segment
 	
-	; Save The size read, stored in BX
+	; Save The size read, stored in BX, may change to number of sectors as kernel size gets bigger
+	; kernel_size is in bytes
 	mov		word [kernel_size], bx
+	mov		word [boot_parameters.kernel_len], bx
 	
+	; Reset the disk
 	m_reset_disk
 	
 	; Write the loading message for the second stage
 	m_write_line loading_msg
 	
 	; Save the the boot parameters so the kernel can access them
-	m_save_parameters
+	m_save_cursor
 	
 	; Enable the a20 line
 	m_enable_a20
+	
+	; Read the size of the memory and store at 'boot_info'
+	m_get_memory_size
 	
 	; Set up and write into memory the interrupt descriptor table
 	m_setup_idt
@@ -65,9 +77,6 @@ stage_2_bootload_start:
 	
 	; Load the tables
 	m_load_gdt_and_idt
-	
-	; Read the size of the memory and store at 'boot_info'
-	m_get_memory_size boot_info
 	
 	; Enable protected mode
 	m_enable_protected
@@ -87,43 +96,7 @@ idt_descriptor:
 	
 gdt_descriptor:
 	dw 0x0017						; 3 tables of 8 bytes total (minus 1)
-    dd 0x0800						; The location of the 3 tables, at 0x0000:0x0800
-
-boot_info:
-struc multiboot_info
-	.flags					dd	0	; Required
-	.memory_low				dd	0	; Memory size. Present if flags[0] is set
-	.memory_high			dd	0
-	.boot_device			dd	0	; Boot device. Present if flags[1] is set
-	.cmd_line				dd	0	; Kernel command line. Present if flags[2] is set
-	.mods_count				dd	0	; Number of modules loaded along with kernel. present if flags[3] is set
-	.mods_addr				dd	0
-	.syms0					dd	0	; Symbol table info. present if flags[4] or flags[5] is set
-	.syms1					dd	0
-	.syms2					dd	0
-	.syms3					dd 	0
-	.mem_map_length			dd	0	; Memory map. Present if flags[6] is set
-	.mem_map_addr			dd	0
-	.drives_length			dd	0	; Physical address of first drive structure. present if flags[7] is set
-	.drives_addr			dd	0
-	.config_table			dd	0	; ROM configuration table. present if flags[8] is set
-	.bootloader_name 		dd	0	; Bootloader name. present if flags[9] is set
-	.apm_table				dd	0	; Advanced power management (APM) table. present if flags[10] is set
-	.vbe_control_info 		dd	0	; Video BIOS extension (VBE). present if flags[11] is set
-	.vbe_mode_info			dd	0
-	.vbe_mode				dw	0
-	.vbe_interface_seg 		dw	0
-	.vbe_interface_off		dw	0
-	.vbe_interface_len		dw	0
-	.framebuffer_addr		dq	0
-	.framebuffer_pitch		dd	0
-	.framebuffer_width		dd	0
-	.framebuffer_height		dd	0
-	.framebuffer_bpp		db	0
-	.framebuffer_type		db	0
-	.framebuffer_palette_addr	dd	0
-	.framebuffer_palette_num_colours	dw	0	
-endstruc
+    dd 0x0800						; The location of the 3 tables, at 0x0000:0x0800, just bellow the IDT
 
 kernel_filename  	db "KERNEL  BIN", 0
 disk_error_msg  	db "Disk error", 0
@@ -140,7 +113,7 @@ root_sectors 		db 0,0
 root_start   		db 0,0
 file_start			db 0,0
 
-kernel_size			db 0,0,0,0
+kernel_size			db 0,0
 
 ; Now in 32bit mode
 	[bits	32]
@@ -151,34 +124,29 @@ stage_2_bootloader_32:
 	lea		esi, [loading_kernel]
 	call	print_string_32
 	
-	;mov		eax, 0x2BADB002				; Multiboot signature
-	;xor		ebx, ebx					; Zero out EBX
-	
 	; Move kernel to target location
-	mov		esi, kernel_location
+	mov		esi, kernel_load_location
 	mov		edi, kernel_target_location
-	mov		ecx, dword [kernel_size]
-	shr		ecx, 2						; Divide by 4 as now copying 4 bytes at a time
+	xor		ecx, ecx					; Zero out ECX for the kernel size
+	mov		cx, word [kernel_size]
+	shr		cx, 2						; Divide by 4 as now copying 4 bytes at a time
 	cld
 	rep		movsd
 	
-	push	dword [kernel_size]			; Push the kernel size so the kernel knows how big it is
-	push	dword boot_info				; Push the boot_info structure for the kernel to uses
-	
-	call	kernel_target_location		; Jump to the kernel. Shouldn't return, but call because of the extra parameter for multiboot_info.
-	
-	cli
-	hlt
+	jmp		kernel_target_location		; Jump to the kernel, shouldn't return
 
 %include '32bit_functions.asm'
 
 times (3 * 512) - ($ - $$) db 0
-memory_map:								; The location where the memory map is stored
 
-	[absolute	kernel_parameters]
+	[absolute	boot_params_location]
 
 boot_parameters:
 	.signature				resw 1
 	.cursor_pos_x			resb 1
 	.cursor_pos_y			resb 1
-	.memory_map_location	resw 1
+	.memory_lower			resw 1
+	.memory_upper			resw 1
+	.memory_map_address		resd 1
+	.memory_map_length		resw 1
+	.kernel_len				resd 1

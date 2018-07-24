@@ -17,6 +17,7 @@ OBJS = $(BIN)/start.o \
 	$(BIN)/interrupt_request.o \
 	$(BIN)/kernel_main.o \
 	$(BIN)/boot.o \
+	$(BIN)/pmm.o \
 	$(BIN)/vga.o \
 	$(BIN)/tty.o \
 	$(BIN)/gdt.o \

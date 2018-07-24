@@ -22,7 +22,7 @@ typedef struct {
 	uint32_t base_addr_lower;
 	uint32_t base_addr_upper;
 	uint32_t length_lower;
-	uint32_t length_upper
+	uint32_t length_upper;
 	uint32_t type;
 	uint32_t acpi;
 } __attribute__((__packed__))  multiboot_mmap_entry_t;
