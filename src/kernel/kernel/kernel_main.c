@@ -463,12 +463,12 @@ static void kernel_task(void) {
 			kprintf("Hello there\n");
 		} else if (strcmp(command_buffer, "uptime") == 0) {
 			unsigned int ticks = get_pit_ticks();
-			unsigned int div = get_pit_divisor();
-			unsigned int sec = (ticks / div) % 60;
-			unsigned int min = (ticks / (div * 60)) % 60;
-			unsigned int hr = (ticks / (div * 60 * 60)) % 24;
-			unsigned int day = (ticks / (div * 60 * 60 * 24)) % 365;
-			kprintf("%d ticks: day:hr:min:sec %3d:%02d:%02d:%02d\n", ticks, day, hr, min, sec);
+			unsigned int freq = get_pit_frequency();
+			unsigned int sec = (ticks / freq) % 60;
+			unsigned int min = (ticks / (freq * 60)) % 60;
+			unsigned int hr = (ticks / (freq * 60 * 60)) % 24;
+			unsigned int day = (ticks / (freq * 60 * 60 * 24)) % 365;
+			kprintf("%u ticks: day:hr:min:sec %3d:%02d:%02d:%02d\n", ticks, day, hr, min, sec);
 		} else if(strcmp(command_buffer, "eg") == 0) {
 			kprintf("Soph is a butt\n");
 		} else if (strcmp(command_buffer, "time") == 0) {

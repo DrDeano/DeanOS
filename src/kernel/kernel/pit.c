@@ -7,18 +7,14 @@
 #include <stdio.h>
 
 /**
- *  \var pit_ticks
- *  
  *  \brief The number of tick that has passed when the PIT was initially set up.
  */
 static volatile uint32_t pit_ticks;
 
 /**
- *  \var divisor
- *  
- *  \brief The divisor the PIT uses to work out the tick rate of the counter.
+ *  \brief The frequency the PIT runs at.
  */
-static uint16_t divisor;
+static uint16_t frequency;
 
 /**
  *  \brief Inline function to send a command to the PIT command register.
@@ -75,7 +71,8 @@ void pit_setup_counter(uint16_t freq, uint8_t counter, uint8_t mode) {
 		return;
 	}
 	
-	divisor = 1193180 / freq;
+	uint16_t divisor = 1193180 / freq;
+	frequency = freq;
 	
 	uint8_t cmd = 0;
 	cmd |= mode;
@@ -108,13 +105,14 @@ uint32_t get_pit_ticks(void) {
 	return pit_ticks;
 }
 
-uint16_t get_pit_divisor(void) {
-	return divisor;
+uint16_t get_pit_frequency(void) {
+	return frequency;
 }
 
 void pit_install(void) {
 	// Set up counter 0 at 100hz in a square wave mode counting in binary
-	pit_setup_counter(100, PIT_OCW_SELECT_COUNTER_0, PIT_OCW_MODE_SQUARE_WAVE_GENERATOR | PIT_OCW_BINARY_COUNT_BINARY);
+	frequency = 100;
+	pit_setup_counter(frequency, PIT_OCW_SELECT_COUNTER_0, PIT_OCW_MODE_SQUARE_WAVE_GENERATOR | PIT_OCW_BINARY_COUNT_BINARY);
 	
 	// Installs 'pit_handler' to IRQ0 (PIC_IRQ_TIMER)
 	irq_install_handler(PIC_IRQ_TIMER, pit_handler);

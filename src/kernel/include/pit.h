@@ -207,6 +207,6 @@ uint32_t get_pit_ticks(void);
  *  
  *  \return The divisor
  */
-uint16_t get_pit_divisor(void);
+uint16_t get_pit_frequency(void);
 
 #endif /* INCLUDE_PIT_H */
