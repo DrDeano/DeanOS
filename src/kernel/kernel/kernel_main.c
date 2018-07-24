@@ -495,22 +495,42 @@ static void kernel_task(void) {
 }
 
 void pmm_test(void) {
-	uint32_t * p = (uint32_t *) pmm_alloc_block();
-	kprintf("p allocated at 0x%0x\n", p);
-	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
+	uint32_t * p1 = (uint32_t *) pmm_alloc_block();
+	kprintf("p1 allocated at 0x%0x\n", p1);
 	
 	uint32_t * p2 = (uint32_t *) pmm_alloc_blocks(2);
 	kprintf("Allocated 2 blocks for p2 at 0x%0x\n", p2);
-	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
-	pmm_free_block(p);
-	p = (uint32_t *) pmm_alloc_block();
-	kprintf("Unallocated p to free block 1. p is reallocated to 0x%0x\n", p);
-	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
+	uint32_t * p3 = (uint32_t *) pmm_alloc_block();
+	kprintf("Allocated 1 blocks for p3 at 0x%0x\n", p3);
 	
-	pmm_free_block(p);
 	pmm_free_blocks(p2, 2);
-	kprintf("Total number of blocks: %d. Used blocks: %d. Free blocks: %d\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
+	kprintf("Unallocated p2 to free block 2\n");
+	
+	uint32_t * p4 = (uint32_t *) pmm_alloc_blocks(3);
+	kprintf("Allocated 3 blocks for p4 at 0x%0x\n", p4);
+	
+	p2 = (uint32_t *) pmm_alloc_blocks(2);
+	kprintf("Re-allocated 2 blocks for p2 at 0x%0x\n", p2);
+	
+	uint32_t * p5 = (uint32_t *) pmm_alloc_block();
+	kprintf("Allocated 1 blocks for p5 at 0x%0x\n", p5);
+	
+	pmm_free_blocks(p4, 3);
+	kprintf("Unallocated p4 to free block 3\n");
+	
+	uint32_t * p6 = (uint32_t *) pmm_alloc_blocks(4);
+	kprintf("Allocated 4 blocks for p6 at 0x%0x\n", p6);
+	
+	pmm_free_block(p1);
+	p1 = (uint32_t *) pmm_alloc_block();
+	kprintf("Unallocated p1 to free block 1. p1 is reallocated to 0x%0x\n", p1);
+	
+	pmm_free_block(p1);
+	pmm_free_blocks(p2, 2);
+	pmm_free_block(p3);
+	pmm_free_block(p5);
+	pmm_free_blocks(p6, 4);
 }
 
 /**
@@ -556,7 +576,7 @@ noreturn void kernel_main(void) {
 	
 	memory_map_entry_t * mem_map = (memory_map_entry_t *) params.memory_map;
 	
-	kprintf("Initiating pmm with %uKB (%uMB) of physical memory, mem_lower: %uKB (%uMB), mem_upper: %u 64KB blocks (%uMB)\n", mem_size, mem_size / 1024, params.memory_lower, params.memory_lower / 1024, params.memory_upper, params.memory_upper / 16);
+	kprintf("%uKB (%uMB), lower: %uKB (%uMB), upper: %u 64KB blocks (%uMB)\n", mem_size, mem_size / 1024, params.memory_lower, params.memory_lower / 1024, params.memory_upper, params.memory_upper / 16);
 	
 	kprintf("Memory map addr: 0x%08p. Memory map length: %u\n", mem_map, mem_map_len);
 	
@@ -585,12 +605,19 @@ noreturn void kernel_main(void) {
 		}
 	}
 	
+	kprintf("Uninitialising kernel code\n");
+	
 	// Uninitialise the kernel memory region
 	pmm_uninit_region(0x100000, params.kernel_size);
 	
+	kprintf("Uninitialising kernel stack\n");
+	
+	// Uninitialise the kernel stack region
+	pmm_uninit_region(0x20000, 0x7FC00);
+	
 	kprintf("Total number of blocks: %u. Used blocks: %u. Free blocks: %u\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
-	//pmm_test();
+	pmm_test();
 	
 	pit_install();
 	

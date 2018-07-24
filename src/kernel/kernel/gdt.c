@@ -1,5 +1,4 @@
 #include <gdt.h>
-#include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 
@@ -154,7 +153,6 @@ void gdt_init(void) {
 	// Initialise the stack segment
 	tss_setup();
 	
-	kprintf("Initialising GDT at 0x%p\n", &gdt_entries);
 	gdt_setup();
 	
 	// Load the gdt table

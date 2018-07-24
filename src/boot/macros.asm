@@ -212,7 +212,7 @@
 	mov		fs, ax
 	mov		gs, ax
 	mov		ss, ax
-	mov		esp, 0x2FFFF
+	mov		esp, kernel_stack
 	mov		ebp, esp
 %endmacro
 

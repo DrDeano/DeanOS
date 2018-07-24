@@ -3,8 +3,6 @@
 #include <idt.h>
 #include <pic.h>
 
-#include <stdio.h>
-
 extern void _irq00();
 extern void _irq01();
 extern void _irq02();
@@ -32,12 +30,10 @@ static irq_handler irq_handlers[IRQ_TOTAL] = {
 
 void irq_install_handler(int irq_num, irq_handler handler) {
 	irq_handlers[irq_num] = handler;
-	kprintf("IRQ Handle for %u installed\n", irq_num);
 }
 
 void irq_uninstall_handler(int irq_num) {
 	irq_handlers[irq_num] = 0;
-	kprintf("IRQ Handle for %u uninstalled\n", irq_num);
 }
  
 /**
@@ -64,8 +60,6 @@ void _irq_handler(regs_t * regs) {
 }
 
 void irq_init(void) {
-	kprintf("Initialising interrupt requests\n");
-	
 	// Remap the PIC IRQ so not to overlap with other exceptions
 	pic_remap_irq();
 

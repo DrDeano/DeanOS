@@ -1,6 +1,5 @@
 #include <string.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include <idt.h>
 #include <gdt.h>
@@ -75,7 +74,6 @@ void idt_close_interrupt_gate(uint8_t index) {
 
 void idt_init(void) {
     // Clear out the entire IDT, initializing it to zeros
-	kprintf("Initialising IDT at 0x%p\n", idt_entries);
     memset(idt_entries, 0, IDT_SIZE);
 	
 	// Load the table

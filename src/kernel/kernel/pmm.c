@@ -75,8 +75,8 @@ static bool get_first_free_blocks(uint32_t * frame, uint32_t num_blocks) {
 		if(memory_bit_map[i] != 0xFFFFFFFF) {
 			for(uint8_t j = 0; j < 32; j++) {
 				if(!get_map_bit((i * 32) + j)) {
-					uint32_t starting_bit = i * 32;
-					starting_bit += 1 << j;
+					uint32_t starting_bit = (i * 32) + j;
+					//starting_bit += 1 << j;
 					
 					uint32_t free = 0;
 					
@@ -94,7 +94,7 @@ static bool get_first_free_blocks(uint32_t * frame, uint32_t num_blocks) {
 			}
 		}
 	}
-	return false;
+	return false;	// Not enough memory for num_blocks blocks
 }
 
 uint32_t pmm_get_used_blocks(void) {
@@ -126,17 +126,17 @@ void * pmm_alloc_block(void) {
 }
 
 void * pmm_alloc_blocks(uint32_t num_blocks) {
-	if(pmm_get_free_blocks() == 0) {
-		return NULL;		// No more memory
+	if(pmm_get_free_blocks() <= num_blocks) {
+		return NULL;		// Not enough memory
 	}
 	
 	uint32_t frame;
 	if(!get_first_free_blocks(&frame, num_blocks)) {
-		return NULL;		// No more memory
+		return NULL;		// Not enough memory
 	}
 	
 	for(uint32_t i = 0; i < num_blocks; i++) {
-		set_map_bit(frame+i);
+		set_map_bit(frame + i);
 	}
 	
 	used_blocks += num_blocks;
@@ -172,6 +172,14 @@ void pmm_init_region(uint32_t base, uint32_t length) {
 			block_offset++;
 			continue;
 		}
+		
+		// If already initialised, then don't need to initialise again
+		if(!get_map_bit(block_offset)) {
+			block_offset++;
+			kprintf("Already set\n");
+			continue;
+		}
+		
 		unset_map_bit(block_offset++);
 		used_blocks--;
 	}
@@ -181,6 +189,13 @@ void pmm_uninit_region(uint32_t base, uint32_t length) {
 	uint32_t block_offset = base / PMM_BLOCK_SIZE;
 	
 	for(uint32_t num_blocks = ((length - 1) / PMM_BLOCK_SIZE) + 1; num_blocks > 0; num_blocks--) {
+		// If already uninitialised, then don't need to uninitialise again
+		if(get_map_bit(block_offset)) {
+			block_offset++;
+			kprintf("Already unset\n");
+			continue;
+		}
+		
 		set_map_bit(block_offset++);
 		used_blocks++;
 	}
@@ -198,5 +213,5 @@ void pmm_init(uint32_t mem_size, uint32_t * bit_map) {
 	// Set all block to be used as will later set the available blocks
 	memset(memory_bit_map, 0xFF, max_blocks / PMM_BLOCKS_PER_BYTE);
 	
-	kprintf("pmm_init: Max blocks: %d Used blocks: %d Bit map size: %d Bytes Num blocks: %d Block offset: %d\n", max_blocks, used_blocks, max_blocks / PMM_BLOCKS_PER_BYTE, memory_bit_map_block_size, memory_bit_map_block_offset);
+	kprintf("pmm_init:Max blocks:%d Bitmap size:%dBytes Num blocks:%d Block offset:%d\n", max_blocks, max_blocks / PMM_BLOCKS_PER_BYTE, memory_bit_map_block_size, memory_bit_map_block_offset);
 }

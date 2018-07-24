@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <stdio.h>
 
 #include <idt.h>
 #include <isr.h>
@@ -107,16 +106,13 @@ void _fault_handler(regs_t * regs) {
 
 void isr_install_handler(uint8_t isr_num, isr_handler handler) {
 	isr_handlers[isr_num] = handler;
-	kprintf("ISR Handle for %u installed\n", isr_num);
 }
 
 void isr_uninstall_handler(uint8_t isr_num) {
 	isr_handlers[isr_num] = 0;
-	kprintf("ISR Handle for %u removed\n", isr_num);
 }
 
 void isr_init() {
-    kprintf("Initialising interrupt service routines\n");
 	idt_open_interrupt_gate(0, (uintptr_t) &_isr00);
 	idt_open_interrupt_gate(1, (uintptr_t) &_isr01);
 	idt_open_interrupt_gate(2, (uintptr_t) &_isr02);

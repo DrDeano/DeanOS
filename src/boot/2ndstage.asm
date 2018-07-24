@@ -6,6 +6,8 @@
 ;%define stage_2_location        (0x2000)	; The location of the second stage bootloader
 %define stage_2_location        (0x7E00)
 
+%define kernel_stack			(0x2FFFF)	; The location of the start of the bottom of the stack
+
 %define kernel_load_segment		(0x3000)	; The segment when the kernel is loaded by the bootloader before A20 is enabled so can access above 1MB
 %define kernel_load_location	(0x30000)	; The location when the kernel is loaded by the bootloader before A20 is enabled so can access above 1MB
 %define kernel_target_location	(0x100000)	; The target location for the kernel to be loaded. Above 1MB.
@@ -132,6 +134,8 @@ stage_2_bootloader_32:
 	shr		cx, 2						; Divide by 4 as now copying 4 bytes at a time
 	cld
 	rep		movsd
+	
+	xchg	bx, bx
 	
 	jmp		kernel_target_location		; Jump to the kernel, shouldn't return
 
