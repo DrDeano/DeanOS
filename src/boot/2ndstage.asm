@@ -135,8 +135,6 @@ stage_2_bootloader_32:
 	cld
 	rep		movsd
 	
-	xchg	bx, bx
-	
 	jmp		kernel_target_location		; Jump to the kernel, shouldn't return
 
 %include '32bit_functions.asm'

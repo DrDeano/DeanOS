@@ -21,6 +21,7 @@
 #include <rtc.h>
 #include <speaker.h>
 #include <pmm.h>
+#include <paging.h>
 
 #if !defined(__i386__)
 #error "This needs to be compiled with a ix86-elf compiler"
@@ -605,19 +606,17 @@ noreturn void kernel_main(void) {
 		}
 	}
 	
-	kprintf("Uninitialising kernel code\n");
-	
 	// Uninitialise the kernel memory region
 	pmm_uninit_region(0x100000, params.kernel_size);
-	
-	kprintf("Uninitialising kernel stack\n");
 	
 	// Uninitialise the kernel stack region
 	pmm_uninit_region(0x20000, 0x7FC00);
 	
 	kprintf("Total number of blocks: %u. Used blocks: %u. Free blocks: %u\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
-	pmm_test();
+	//pmm_test();
+	
+	paging_init();
 	
 	pit_install();
 	

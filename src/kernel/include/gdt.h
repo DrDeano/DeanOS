@@ -132,7 +132,7 @@ typedef struct {
 	
 	// High 8 bits of base address
 	uint8_t  base_high : 8;				/**< The upper 8 bits of the base address. Describes the start of memory for the entry. */
-} __attribute__((packed)) gdt_entry_t;
+} __attribute__((__packed__)) gdt_entry_t;
 
 /**
  *  \struct gdt_ptr_t
@@ -145,7 +145,7 @@ typedef struct {
 	gdt_entry_t * gdt_location;	/**< 32bit entry for the base address for the GDT. */
 	// uint32_t base;
 	// uintptr_t * base;
-} __attribute__((packed)) gdt_ptr_t;
+} __attribute__((__packed__)) gdt_ptr_t;
 
 /**
  *  \struct tss_t
@@ -190,7 +190,7 @@ typedef struct {
     uint32_t LDT;		/**< The local descriptor table register. */
     uint16_t TRAP;		/**< ? */
     uint16_t IO_Permissions_Base_Offset;	/**< A pointer to a I/O port bitmap for the current task which specifies individual ports the program should have access to. */
-} __attribute__((packed)) tss_t;
+} __attribute__((__packed__)) tss_t;
 
 /**
  *  \brief Set up the GDT table with 6 entries. The NULL, kernel code, kernel data, user code, user

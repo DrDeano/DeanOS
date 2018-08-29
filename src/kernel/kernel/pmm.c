@@ -166,7 +166,7 @@ void pmm_init_region(uint32_t base, uint32_t length) {
 	uint32_t block_offset = base / PMM_BLOCK_SIZE;
 	
 	for(uint32_t num_blocks = ((length - 1) / PMM_BLOCK_SIZE) + 1; num_blocks > 0; num_blocks--) {
-		// If trying to init with in the bit map, don't
+		// If trying to init within the bit map, don't
 		// Don't init block zero
 		if(((block_offset >= memory_bit_map_block_offset) && (block_offset <= (memory_bit_map_block_offset + memory_bit_map_block_size))) || block_offset == 0) {
 			block_offset++;
