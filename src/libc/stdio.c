@@ -25,14 +25,14 @@ int kputchar(int c) {
 
 /**
  *  \brief Helper function for prints a C string.
- *  
+ *
  *  \param [in] str   The string to print.
  *  \param [in] width The width field.
  *  \return The number for characters printed.
  */
 static int kprint_string(char * str, size_t width) {
 	int written = 0;
-	
+
 	if (width == 0) { // Print full string
 		terminal_write_string(str);
 		written += strlen(str);
@@ -49,17 +49,17 @@ static int kprint_string(char * str, size_t width) {
 			width--;
 		}
 	}
-	
+
 	return written;
 }
 
 /**
  *  \brief Print a 8 bit value in hexadecimal
- *  
+ *
  *  \param [in] num     The 8 bit value to print
  *  \param [in] capital Whether to print the letters in lower or upper case
- *  \param [in] pad     Whether the 8 bit value is realy 4 bits so only print the lower 4 bits
- *  
+ *  \param [in] pad     Whether the 8 bit value is really 4 bits so only print the lower 4 bits
+ *
  *  \return The number of characters printed
  */
 static int kprint_hex_digit(uint8_t num, bool capital, bool pad) {
@@ -67,8 +67,8 @@ static int kprint_hex_digit(uint8_t num, bool capital, bool pad) {
 	const uint8_t high = (num & 0xF0) >> 4;
 	const uint8_t low = num & 0x0F;
 	int ret = 1;
-	
-	// If high is 0, and no padding, then dont print the leading 0
+
+	// If high is 0, and no padding, then don't print the leading 0
 	if (high != 0 || pad) {
 		kputchar(hex[high]);
 		ret++;
@@ -79,9 +79,9 @@ static int kprint_hex_digit(uint8_t num, bool capital, bool pad) {
 
 /**
  *  \brief Print a signed 64 bit integer
- *  
+ *
  *  \param [in] num The integer to print
- *  
+ *
  *  \return The number of characters printed
  */
 static int kprint_int(int32_t num, uint8_t width, flags flag) {
@@ -100,26 +100,26 @@ static int kprint_int(int32_t num, uint8_t width, flags flag) {
 		kputchar('0');
 		return k;
 	}
-	
+
 	// Is the number negative
 	bool negative = num < 0;
-	
+
 	// Get the absolute value
 	num = negative ? -num : num;
-	
+
 	// Buffer to store the string representation of the number
 	// 1 for the sign (+ or -), 20 for digits of 64 bit number, 1 for null terminating
 	char buffer[1 + 20 + 1];
 	buffer[sizeof(buffer) - 1] = '\0';
-	
+
 	// Walk through the number backwards
 	int i = sizeof(buffer) - 2;
 	while(num > 0) {
 		buffer[i--] = '0' + (num % 10);
 		num /= 10;
 	}
-	
-	
+
+
 	if((sizeof(buffer) - i - 2) < width) {
 		for(j = width - (sizeof(buffer) - i - 2); j > 0; j--) {
 			if(flag.zero) {
@@ -129,23 +129,23 @@ static int kprint_int(int32_t num, uint8_t width, flags flag) {
 			}
 		}
 	}
-	
+
 	// Add sign
 	if (negative) {
 		buffer[i--] = '-';
 	}
-	
+
 	// Print string representation
 	kprint_string(&buffer[i + 1], 0);
-	
+
 	return sizeof(buffer) - i - 2;
 }
 
 /**
  *  \brief Print a unsigned 64 bit integer
- *  
+ *
  *  \param [in] num The integer to print
- *  
+ *
  *  \return The number of characters printed
  */
 static int kprint_uint(uint32_t num, uint8_t width, flags flag) {
@@ -154,19 +154,19 @@ static int kprint_uint(uint32_t num, uint8_t width, flags flag) {
 		kputchar('0');
 		return 1;
 	}
-	
+
 	// Buffer to store the string representation of the number
 	// 20 for digits of 64 bit number, 1 for null terminating
 	char buffer[20 + 1];
 	buffer[sizeof(buffer) - 1] = '\0';
-	
+
 	// Walk through the number backwards
 	int i = sizeof(buffer) - 2;
 	while(num > 0) {
 		buffer[i--] = '0' + (num % 10);
 		num /= 10;
 	}
-	
+
 	int j;
 	if((sizeof(buffer) - i - 2) < width) {
 		for(j = width - (sizeof(buffer) - i - 2); j > 0; j--) {
@@ -179,44 +179,44 @@ static int kprint_uint(uint32_t num, uint8_t width, flags flag) {
 			}
 		}
 	}
-	
+
 	// Print string representation
 	kprint_string(&buffer[i + 1], 0);
-	
+
 	return sizeof(buffer) - i - 2;
 }
 
 /**
  *  \brief Print an unsigned integer as hexadecimal
- *  
+ *
  *  \param [in] num     The number to print
- *  \param [in] capital Whether to print the hex with upper or lower case lettters
+ *  \param [in] capital Whether to print the hex with upper or lower case letters
  *  \param [in] width   How wide are we printing. How many hex characters are we printing.
- *  
+ *
  *  \return The number of characters printed
  */
 static int kprint_hex(const uint32_t num, const bool capital, uint8_t width) {
-	// This is the fist hex. If has a leading 0, dont print the leading 0
+	// This is the fist hex. If has a leading 0, don't print the leading 0
 	bool first = true;
-	
+
 	// The amount written
 	int written = 0;
-	
+
 	// Loop over the number
 	for(int i = sizeof(num) - 1; i >= 0; i--) {
 		// Get the next bytes
 		const uint8_t byte = (num >> (8 * i)) & 0xFF;
-		
+
 		// Is width specified and has we printed the width
 		if (width && (i * 2) >= width) {
 			continue;
 		} else if (width == 0) { // No width specified
 			// Continue until we get the first non zero byte
-			if (first && byte == 0 && i > 1) {
+			if (first && byte == 0 && i > 0) {
 				continue;
 			}
 		}
-		
+
 		// Print the hex digit
 		written += kprint_hex_digit(byte, capital, !first ? true : width > 0);
 		// No long the fist hex digit
@@ -228,36 +228,36 @@ static int kprint_hex(const uint32_t num, const bool capital, uint8_t width) {
 			width -= 2;
 		}
 	}
-	
+
 	return written;
 }
 
 int kvprintf(const char * format, va_list args) {
 	int written = 0;
-	
+
 	flags flag;
-	
+
 	size_t width;
 	//size_t precision;
-	
+
 	char c;
 	while (*format) {
 		// Get the next character
 		c = *format++;
-		
+
 		// Reset flags
 		flag.left_align = false;
 		flag.plus = false;
 		flag.space = false;
 		flag.zero = false;
 		flag.hash = false;
-		
+
 		width = 0;
 		//precision = 0;
-		
+
 		if (c == '%') { // Is it the start of a format
 			char f = *format++;
-			
+
 			// Check for flag field
 			while(f == '-' || f == '+' || f == ' ' || f == '0' || f == '#') {
 				switch (f) {
@@ -287,8 +287,8 @@ int kvprintf(const char * format, va_list args) {
 				}
 				f = *format++;
 			}
-			
-			
+
+
 			// Check for width field. A minimum width
 			if (f >= '0' && f <= '9') {
 				width = f - '0';
@@ -297,7 +297,7 @@ int kvprintf(const char * format, va_list args) {
 				width = va_arg(args, size_t);
 				f = *format++;
 			}
-			
+
 			// Check for precision, will have a . at the start
 			if (f == '.') {
 				// Get the precision field
@@ -305,7 +305,7 @@ int kvprintf(const char * format, va_list args) {
 				 *  \todo Use precision
 				 */
 				f = *format++;
-				
+
 				if (f >= '0' && f <= '9') {
 					//precision = f - '0';
 					f = *format++;
@@ -314,7 +314,7 @@ int kvprintf(const char * format, va_list args) {
 					f = *format++;
 				}
 			}
-			
+
 			// Check the length field
 			// Use flags?
 			// See https://en.wikipedia.org/wiki/Printf_format_string
@@ -365,16 +365,16 @@ int kvprintf(const char * format, va_list args) {
 					case '%':
 						written += kputchar('%');
 						break;
-					
+
 					case 'd':
 					case 'i':
 						written += kprint_int(va_arg(args, int32_t), width, flag);
 						break;
-					
+
 					case 'u':
 						written += kprint_uint(va_arg(args, uint32_t), width, flag);
 						break;
-					
+
 					case 'f':
 					case 'F':
 						/**
@@ -382,7 +382,7 @@ int kvprintf(const char * format, va_list args) {
 						 */
 						kputchar('N');
 						break;
-					
+
 					case 'e':
 					case 'E':
 						/**
@@ -390,7 +390,7 @@ int kvprintf(const char * format, va_list args) {
 						 */
 						kputchar('N');
 						break;
-					
+
 					case 'g':
 					case 'G':
 						/**
@@ -398,11 +398,11 @@ int kvprintf(const char * format, va_list args) {
 						 */
 						kputchar('N');
 						break;
-					
+
 					case 'x':
 						written += kprint_hex(va_arg(args, uint32_t), false, width);
 						break;
-					
+
 					case 'X':
 						written += kprint_hex(va_arg(args, uint32_t), true, width);
 						break;
@@ -412,18 +412,18 @@ int kvprintf(const char * format, va_list args) {
 						 */
 						kputchar('N');
 						break;
-					
+
 					case 's':
 						written += kprint_string(va_arg(args, char *), width);
 						break;
-					
+
 					case 'c':
 						written += kputchar((char) va_arg(args, int));
 						break;
-					
+
 					case 'p':
 						ptr = (void *) va_arg(args, void *);
-						
+
 						if (ptr == NULL) { // Print '(null)'
 							// Make sure to print the full string
 							/* if (precision < 5) {
@@ -434,7 +434,7 @@ int kvprintf(const char * format, va_list args) {
 							written += kprint_hex((uint32_t) ptr, false, width);
 						}
 						break;
-					
+
 					case 'a':
 					case 'A':
 						/**
@@ -442,14 +442,14 @@ int kvprintf(const char * format, va_list args) {
 						 */
 						kputchar('N');
 						break;
-					
+
 					case 'n':
 						/**
 						 *  \todo
 						 */
 						kputchar('N');
 						break;
-					
+
 					default:
 						/**
 						 *  \todo
@@ -462,7 +462,7 @@ int kvprintf(const char * format, va_list args) {
 			written += kputchar(c);
 		}
 	}
-	
+
 	/**
 	 *  \todo Added support so can change colour of display
 	 */
@@ -471,10 +471,10 @@ int kvprintf(const char * format, va_list args) {
 
 int kprintf(const char * format, ...) {
 	int written = 0;
-	
+
 	va_list args;
 	va_start(args, format);
-	
+
 	written += kvprintf(format, args);
 
 	va_end(args);

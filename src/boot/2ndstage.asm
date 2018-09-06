@@ -6,7 +6,7 @@
 ;%define stage_2_location        (0x2000)	; The location of the second stage bootloader
 %define stage_2_location        (0x7E00)
 
-%define kernel_stack			(0x2FFFF)	; The location of the start of the bottom of the stack
+%define kernel_stack			(0x9FBFF)	; The location of the start of the bottom of the stack
 
 %define kernel_load_segment		(0x3000)	; The segment when the kernel is loaded by the bootloader before A20 is enabled so can access above 1MB
 %define kernel_load_location	(0x30000)	; The location when the kernel is loaded by the bootloader before A20 is enabled so can access above 1MB

@@ -21,3 +21,6 @@ bin/
 *.ini
 
 doc/
+
+*.cbp
+*.layout

@@ -28,8 +28,10 @@ OBJS = $(BIN)/start.o \
 	$(BIN)/pit.o \
 	$(BIN)/keyboard.o \
 	$(BIN)/paging.o \
+	$(BIN)/cmos.o \
 	$(BIN)/rtc.o \
-	$(BIN)/speaker.o
+	$(BIN)/speaker.o \
+	$(BIN)/floppy.o
 
 all: clean $(BIN)/kernel.bin | $(BIN)
 
