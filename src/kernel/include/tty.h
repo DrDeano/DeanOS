@@ -22,10 +22,10 @@
 #define TERMINAL_ROW_MIN 7
 
 /**
- *  The upper 7 rows are reserved for the logo and the logo is fixed and won't scroll, so this is
- *  the start of the top of the screen below the logo.
+ *  The total number of rows that are scrolled. This is used for the screen space for scrollable
+ *  pages.
  */
-#define TERMINAL_ROW_MAX 24
+#define TERMINAL_ROW_TOTAL	(VGA_HEIGHT - TERMINAL_ROW_MIN)
 
 void page_up(void);
 

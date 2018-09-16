@@ -362,7 +362,7 @@ static void kernel_task(void) {
 					break;
 
 				case KEYBOARD_KEY_PAGE_UP:
-					//kprintf("PUP\n");
+					page_up();
 					break;
 
 				case KEYBOARD_KEY_DELETE:
@@ -374,11 +374,10 @@ static void kernel_task(void) {
 					break;
 
 				case KEYBOARD_KEY_PAGE_DOWN:
-					//kprintf("PDOWN\n");
+					page_down();
 					break;
 
 				case KEYBOARD_KEY_ARROW_UP:
-					//kprintf("AUP\n");
 					clear_line();
 
 					zero_cmd_buffer();
@@ -389,12 +388,9 @@ static void kernel_task(void) {
 					for(unsigned int i = 0; i < strlen(prev_cmd); i++) {
 						command_buffer[command_buffer_index++] = prev_cmd[i];
 					}
-					//memcpy(command_buffer, prev_cmd, strlen(prev_cmd) + 1); // Includes the null terminator
-					//command_buffer_index = strlen(prev_cmd) + 1;
 					break;
 
 				case KEYBOARD_KEY_ARROW_DOWN:
-					//kprintf("ADOWN\n");
 					clear_line();
 
 					zero_cmd_buffer();
@@ -408,42 +404,27 @@ static void kernel_task(void) {
 					break;
 
 				case KEYBOARD_KEY_ARROW_LEFT:
-					//kprintf("ALEFT\n");
 					move_left();
 					break;
 
 				case KEYBOARD_KEY_ARROW_RIGHT:
-					//kprintf("ARIGHT\n");
 					move_right();
 					break;
 
 				case KEYBOARD_KEY_BACKSPACE:
 					if (command_buffer_index > 0) {
-						/* kputchar('\b');
-						kputchar('\0');
-						kputchar('\b');
-						//command_buffer_index--;
-						command_buffer[command_buffer_index--] = '\0'; */
 						add_char_to_cmd('\b');
 					}
 
 					break;
 
 				case KEYBOARD_KEY_TAB:
-					/* kputchar('\t');
-					command_buffer[command_buffer_index++] = ' ';
-					command_buffer[command_buffer_index++] = ' ';
-					command_buffer[command_buffer_index++] = ' ';
-					command_buffer[command_buffer_index++] = ' '; */
 					add_char_to_cmd('\t');
 					break;
 
 				default:
 					ch = key_to_ascii(key);
 					if(ch) {
-						/* kputchar(ch);
-
-						command_buffer[command_buffer_index++] = ch; */
 						add_char_to_cmd(ch);
 					}
 					break;
@@ -454,7 +435,7 @@ static void kernel_task(void) {
 				break;
 			}
 		}
-		//command_buffer[command_buffer_index] = '\0';
+
 		add_command(command_buffer);
 
 		if(strcmp(command_buffer, "help") == 0) {
@@ -561,7 +542,7 @@ void paging_test(void) {
  *  \brief The kernel main entry point that initiates everything.
  */
 noreturn void kernel_main(void) {
-	// Get the parameters from the bootloader. The cursor position
+	// Get the parameters from the boot loader. The cursor position
 	boot_params params;
 
 	char * str_type[] = {
@@ -578,7 +559,7 @@ noreturn void kernel_main(void) {
 	terminal_initialise(&params);
 
 	if(params.sig == 0) {
-		panic("Unable to get parameters from bootloader\n");
+		panic("Unable to get parameters from boot loader\n");
 	}
 
 	kprintf("Kernel size: %u bytes\n", params.kernel_size);

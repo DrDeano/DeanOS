@@ -216,7 +216,7 @@ static void floppy_reset(void) {
 		floppy_check_interrupt(&status_reg_0, &cylinder);
 	}
 
-	floppy_write_ccr(0x00);
+	floppy_write_ccr(FLOPPY_CCR_500);
 
 	// Pass mechanical drive info. step rate=3ms, unload time=240ms, load time=16ms
 	floppy_drive_data(3, 16, 240, true);
