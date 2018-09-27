@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
-#include <main.h>
+#include <panic.h>
 
 noreturn void abort(void) {
 #if defined(__is_libk)

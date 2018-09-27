@@ -1,6 +1,6 @@
 /**
  *  \file irq.h
- *  \brief The Interrupt Request handler functions for adding, removing and setting up the IRQ's.
+ *  \brief Functions, definitions and structures for setting up the Interrupt Request handlers.
  */
 #ifndef INCLUDE_IRQ_H
 #define INCLUDE_IRQ_H
@@ -14,9 +14,9 @@
 
 /**
  *  \typedef typedef void (*irq_handler)(regs_t * regs)
- *  \brief The type of a IRQ handler
+ *  \brief The type of a IRQ handler.
  *  
- *  \param [in] regs Takes registers that were present when the handler was called.
+ *  \param [in] regs The registers that were present when the handler was called.
  */
 typedef void (*irq_handler)(regs_t * regs);
 
@@ -37,7 +37,21 @@ void irq_install_handler(int irq_num, irq_handler handler);
 void irq_uninstall_handler(int irq_num);
 
 /**
- *  \brief Initiate the IRQ's by adding to the IDT the interrupt handlers for each IRS.
+ *  \brief Mask off a interrupt to disable the interrupt by supplying the IRQ number.
+ *  
+ *  \param [in] irq_num The IRQ number to be masked off.
+ */
+void irq_set_mask(uint8_t irq_num);
+
+/**
+ *  \brief Unmask a interrupt to enable the interrupt by supplying the IRQ number.
+ *  
+ *  \param [in] irq_num The IRQ number to unmask.
+ */
+void irq_clear_mask(uint8_t irq_num);
+
+/**
+ *  \brief Initiates the IRQ's by adding to the IDT the interrupt handlers for each IRQ.
  */
 void irq_init(void);
 

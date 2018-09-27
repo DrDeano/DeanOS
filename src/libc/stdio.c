@@ -19,7 +19,7 @@ typedef struct {
 
 int kputchar(int c) {
 	char ch = (char) c;
-	terminal_put_char(ch);
+	tty_put_char(ch);
 	return 1;
 }
 
@@ -34,7 +34,7 @@ static int kprint_string(char * str, size_t width) {
 	int written = 0;
 
 	if (width == 0) { // Print full string
-		terminal_write_string(str);
+		tty_write_string(str);
 		written += strlen(str);
 		/* while(*str) {
 			kputchar(*str);

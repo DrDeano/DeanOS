@@ -1,64 +1,42 @@
+/**
+ *  \todo Add all scan codes types.
+ *  \todo Check all error codes returned from keyboard.
+ *  \todo Finish all functions as some just return zero.
+ */
+
 #include <keyboard.h>
 #include <pic.h>
 #include <regs_t.h>
-#include <stdio.h>
 #include <irq.h>
 #include <portio.h>
 
 #include <stdbool.h>
+#include <stdio.h>
 
 /**
- *  A structure for storing the key, its ASCII value, (if has one), and the upper case ASCII value
- * (if has one). If hasn't got an upper case ASCII value, then is the same as the lower case value.
+ *  \struct key_mapping
+ *  
+ *  \brief A structure for storing the key, its ASCII value, (if has one), and the upper case ASCII
+ *  value (if has one). If hasn't got an upper case ASCII value, then is the same as the lower case
+ *  value.
  */
 typedef struct {
-    const uint8_t key;					/**< The key enum that was presses */
+    const uint8_t key;					/**< The key enumeration that was presses */
     const unsigned char ascii;			/**< The ASCII value of the key */
-    const unsigned char shift_ascii;	/**< The uppercase ASCII value, if a character. */
+    const unsigned char shift_ascii;	/**< The upper case ASCII value, if a character. */
 } key_mapping;
 
-/**
- *  The last key that was pressed. Then is reset to KEYBOARD_KEY_UNKNOWN once accessed.
- */
-static unsigned char last_key_press;
+static unsigned char last_key_press;	/**< The last key that was pressed. Then is reset to \ref KEYBOARD_KEY_UNKNOWN once accessed. */
+static bool shift_pressed;				/**< Is the shift key pressed. */
+static bool ctrl_pressed;				/**< Is the control key pressed. */
+static bool alt_pressed;				/**< Is the ALT key pressed. */
+static bool caps_lock_toggle;			/**< Is the caps lock on. */
+static bool num_lock_toggle;			/**< Is the number lock on. */
+static bool scroll_lock_toggle;			/**< Is the scroll lock on. */
+static bool is_extended;				/**< Is the key being pressed part of the extended range of scan codes. */
 
 /**
- *  Is the shift key pressed.
- */
-static bool shift_pressed;
-
-/**
- *  Is the control key pressed.
- */
-static bool ctrl_pressed;
-
-/**
- *  Is the alt key pressed.
- */
-static bool alt_pressed;
-
-/**
- *  Is the caps lock on.
- */
-static bool caps_lock_toggle;
-
-/**
- *  Is the number lock on.
- */
-static bool num_lock_toggle;
-
-/**
- *  Is the scroll lock on.
- */
-static bool scroll_lock_toggle;
-
-/**
- *  Is the key being pressed part of the extended range of scan codes.
- */
-static bool is_extended;
-
-/**
- *  The key map of set 1 of scan codes.
+ *  \brief The key map of set 1 of scan codes.
  */
 unsigned char keymap[256] = {
 	KEYBOARD_KEY_UNKNOWN,
@@ -304,7 +282,7 @@ unsigned char keymap[256] = {
 };
 
 /**
- *  The array of scan code to ASCII key map.
+ *  \brief The array of scan code to ASCII key map.
  */
 static const key_mapping key_to_ascii_map[] = {
     // Letters.
@@ -334,7 +312,7 @@ static const key_mapping key_to_ascii_map[] = {
     [KEYBOARD_KEY_X] = { KEYBOARD_KEY_X, 'x', 'X' },
     [KEYBOARD_KEY_Y] = { KEYBOARD_KEY_Y, 'y', 'Y' },
     [KEYBOARD_KEY_Z] = { KEYBOARD_KEY_Z, 'z', 'Z' },
-
+	
     // Numbers.
     [KEYBOARD_KEY_1] = { KEYBOARD_KEY_1, '1', '!' },
     [KEYBOARD_KEY_2] = { KEYBOARD_KEY_2, '2', '@' },
@@ -346,7 +324,7 @@ static const key_mapping key_to_ascii_map[] = {
     [KEYBOARD_KEY_8] = { KEYBOARD_KEY_8, '8', '*' },
     [KEYBOARD_KEY_9] = { KEYBOARD_KEY_9, '9', '(' },
     [KEYBOARD_KEY_0] = { KEYBOARD_KEY_0, '0', ')' },
-
+	
     [KEYBOARD_KEY_ENTER]			= { KEYBOARD_KEY_ENTER,			'\n', '\n' },
     [KEYBOARD_KEY_ESC]				= { KEYBOARD_KEY_ESC,			'\e', '\e' },
     [KEYBOARD_KEY_BACKSPACE]		= { KEYBOARD_KEY_BACKSPACE,		'\b', '\b' },
@@ -363,33 +341,33 @@ static const key_mapping key_to_ascii_map[] = {
     [KEYBOARD_KEY_COMMA]			= { KEYBOARD_KEY_COMMA,			',',  '<' },
     [KEYBOARD_KEY_FULL_STOP]		= { KEYBOARD_KEY_FULL_STOP,		'.',  '>' },
     [KEYBOARD_KEY_SLASH]			= { KEYBOARD_KEY_SLASH,			'/',  '?' },
-
+	
     // Num pad.
-    [KEYBOARD_KEY_NUM_SLASH]		= { KEYBOARD_KEY_NUM_SLASH,		'/', '/' },
-    [KEYBOARD_KEY_NUM_STAR]			= { KEYBOARD_KEY_NUM_STAR,		'*', '*' },
-    [KEYBOARD_KEY_NUM_MINUS]		= { KEYBOARD_KEY_NUM_MINUS,		'-', '-' },
-    [KEYBOARD_KEY_NUM_PLUS]			= { KEYBOARD_KEY_NUM_PLUS,		'+', '+' },
+    [KEYBOARD_KEY_NUM_SLASH]		= { KEYBOARD_KEY_NUM_SLASH,		'/',  '/' },
+    [KEYBOARD_KEY_NUM_STAR]			= { KEYBOARD_KEY_NUM_STAR,		'*',  '*' },
+    [KEYBOARD_KEY_NUM_MINUS]		= { KEYBOARD_KEY_NUM_MINUS,		'-',  '-' },
+    [KEYBOARD_KEY_NUM_PLUS]			= { KEYBOARD_KEY_NUM_PLUS,		'+',  '+' },
     [KEYBOARD_KEY_NUM_ENTER]		= { KEYBOARD_KEY_NUM_ENTER,		'\n', '\n' },
-    [KEYBOARD_KEY_NUM_1]			= { KEYBOARD_KEY_NUM_1,			'E', '1' },
-    [KEYBOARD_KEY_NUM_2]			= { KEYBOARD_KEY_NUM_2,			'D', '2' },
-    [KEYBOARD_KEY_NUM_3]			= { KEYBOARD_KEY_NUM_3,			'P', '3' },
-    [KEYBOARD_KEY_NUM_4]			= { KEYBOARD_KEY_NUM_4,			'L', '4' },
-    [KEYBOARD_KEY_NUM_5]			= { KEYBOARD_KEY_NUM_5,			  0, '5' },
-    [KEYBOARD_KEY_NUM_6]			= { KEYBOARD_KEY_NUM_6,			'R', '6' },
-    [KEYBOARD_KEY_NUM_7]			= { KEYBOARD_KEY_NUM_7,			'H', '7' },
-    [KEYBOARD_KEY_NUM_8]			= { KEYBOARD_KEY_NUM_8,			'U', '8' },
-    [KEYBOARD_KEY_NUM_9]			= { KEYBOARD_KEY_NUM_9,			'P', '9' },
-    [KEYBOARD_KEY_NUM_0]			= { KEYBOARD_KEY_NUM_0,			'I', '0' },
-    [KEYBOARD_KEY_NUM_FULL_STOP]	= { KEYBOARD_KEY_NUM_FULL_STOP, 'D', '.' },
+    [KEYBOARD_KEY_NUM_1]			= { KEYBOARD_KEY_NUM_1,			'E',  '1' },
+    [KEYBOARD_KEY_NUM_2]			= { KEYBOARD_KEY_NUM_2,			'D',  '2' },
+    [KEYBOARD_KEY_NUM_3]			= { KEYBOARD_KEY_NUM_3,			'P',  '3' },
+    [KEYBOARD_KEY_NUM_4]			= { KEYBOARD_KEY_NUM_4,			'L',  '4' },
+    [KEYBOARD_KEY_NUM_5]			= { KEYBOARD_KEY_NUM_5,			'\0', '5' },
+    [KEYBOARD_KEY_NUM_6]			= { KEYBOARD_KEY_NUM_6,			'R',  '6' },
+    [KEYBOARD_KEY_NUM_7]			= { KEYBOARD_KEY_NUM_7,			'H',  '7' },
+    [KEYBOARD_KEY_NUM_8]			= { KEYBOARD_KEY_NUM_8,			'U',  '8' },
+    [KEYBOARD_KEY_NUM_9]			= { KEYBOARD_KEY_NUM_9,			'P',  '9' },
+    [KEYBOARD_KEY_NUM_0]			= { KEYBOARD_KEY_NUM_0,			'I',  '0' },
+    [KEYBOARD_KEY_NUM_FULL_STOP]	= { KEYBOARD_KEY_NUM_FULL_STOP, 'D',  '.' },
 };
 
 /**
  *  \brief Wait until the keyboard is ready to be sent data and/or commands by checking if the
  *  buffer is full.
+ *  \todo Maybe add time out with error code.
  */
 static void keyboard_controller_wait_send(void) {
-	//uint32_t timeout = 1000000;
-	while(1 /*timeout--*/) {
+	while(1) {
 		// Read the status register and check that the input buffer is full. If full, then try again until not full
 		if ((keyboard_controller_read_status() & KEYBOARD_STATUS_REGISTER_INPUT_BUFFER_MASK) == 0) {
 			return;
@@ -400,6 +378,7 @@ static void keyboard_controller_wait_send(void) {
 /**
  *  \brief Wait until the keyboard output buffer is full ready to be read from by checking if the
  *  buffer is full.
+ *  \todo Maybe add time out with error code.
  */
 static void keyboard_controller_wait_receive(void) {
 	while(1) {
@@ -476,7 +455,6 @@ bool keyboard_interface_test(void) {
 	// Wait until buffer is full
 	keyboard_controller_wait_receive();
 	
-	
     // 0x00: Success, no errors
     // 0x01: Keyboard clock line stuck low
     // 0x02: Keyboard clock line stuck high
@@ -487,8 +465,8 @@ bool keyboard_interface_test(void) {
 }
 
 /**
- *  \brief Set the keyboard caps, num and scroll lock lights depending whether the keys have been
- *  pressed/toggled.
+ *  \brief Set the keyboard caps, number and scroll lock lights depending whether the keys have
+ *  been pressed/toggled.
  *  
  *  \param [in] scroll_lock Whether the scroll lock is on.
  *  \param [in] num_lock    Whether the number lock is on.
@@ -511,7 +489,7 @@ static void keyboard_handler(regs_t * regs) {
 	
 	unsigned char scancode;
 	unsigned char key_pressed;
-
+	
     // Read from the keyboard's data buffer
 	scancode = keyboard_encoder_read_input();
 	
@@ -529,7 +507,7 @@ static void keyboard_handler(regs_t * regs) {
 	}
 	
 	is_extended = false;
-
+	
     // If the top bit of the byte we read from the keyboard is set, then the key has just been released
 	if (scancode & 0x80) {
         switch (key_pressed) {
@@ -585,7 +563,6 @@ static void keyboard_handler(regs_t * regs) {
 		}
 		last_key_press = key_pressed;
 	}
-	
 }
 
 char key_to_ascii(unsigned char key) {
@@ -603,20 +580,20 @@ char key_to_ascii(unsigned char key) {
 	return key_to_ascii_map[key].ascii;
 }
 
-unsigned char get_last_key_press() {
+unsigned char get_last_key_press(void) {
 	unsigned char ret = last_key_press;
 	last_key_press = KEYBOARD_KEY_UNKNOWN;
 	return ret;
 }
 
-void keyboard_init() {
+void keyboard_init(void) {
 	// Installs 'keyboard_handler' to IRQ1
 	last_key_press = KEYBOARD_KEY_UNKNOWN;
 	
 	shift_pressed = false;
 	ctrl_pressed = false;
 	alt_pressed = false;
-
+	
 	caps_lock_toggle = false;
 	num_lock_toggle = false;
 	scroll_lock_toggle = false;

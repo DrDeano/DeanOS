@@ -5,7 +5,7 @@ boot_params * get_boot_params(boot_params * param) {
 		return NULL;
 	}
 	
-	// Get the parameters from the bootloader
+	// Get the parameters from the boot loader
 	boot_params * _params = (boot_params *) ADDRESS;
 	
 	// If the signature is valid, then return the parameters
@@ -21,15 +21,14 @@ boot_params * get_boot_params(boot_params * param) {
         return param;
     }
 	
+	// If invalid, then zero all values and return NULL
 	param->sig = 0;
 	param->cursor_x = 0;
 	param->cursor_y = 0;
 	param->memory_lower = 0;
 	param->memory_upper = 0;
-	param->memory_map = 0;
+	param->memory_map = NULL;
 	param->memory_map_length = 0;
 	param->kernel_size = 0;
-	
-	// Else return NULL as not a valid signature and the data may be wrong
 	return NULL;
 }

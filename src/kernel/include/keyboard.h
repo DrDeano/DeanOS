@@ -1,6 +1,6 @@
 /**
  *  \file keyboard.h
- *  \brief The keyboard driver.
+ *  \brief Functions, definitions and structures for setting up the keyboard driver.
  */
 #ifndef INCLUDE_KEYBOARD_H
 #define INCLUDE_KEYBOARD_H
@@ -33,54 +33,18 @@
 // --------------------------
 
 /**
- *  \brief Whether the output buffer is full. If set, then the buffer is full so can be read. If
- *  not set, then the buffer isn't full and shouldn't be read.
+ *  \brief The keyboard status registers masks.
  */
-#define KEYBOARD_STATUS_REGISTER_OUTPUT_BUFFER_MASK		0x01	// xxxxxxx1
-
-/**
- *  \brief Whether the input buffer is full. If set, then the buffer is full so don't write
- *  anything yet. If not set, then  the buffer isn't full and can be written to.
- */
-#define KEYBOARD_STATUS_REGISTER_INPUT_BUFFER_MASK		0x02	// xxxxxx1x
-
-/**
- *  \brief The system flag that is set when a successful keyboard controller self test is
- *  completed. Is unset after a power on reset.
- */
-#define KEYBOARD_STATUS_REGISTER_SYSTEM_FLAGS_MASK		0x04	// xxxxx1xx
-
-/**
- *  \brief A flag saying whether the input buffer was data (via port 0x60) or a command (via port
- *  0x64). If set, then was date, else is a command.
- */
-#define KEYBOARD_STATUS_REGISTER_COMMAND_DATA_MASK		0x08	// xxxx1xxx
-
-/**
- *  \brief Set if the keyboard is unlocked. If unset, then the keyboard is locked.
- */
-#define KEYBOARD_STATUS_REGISTER_KEYBOARD_LOCK_MASK		0x10	// xxx1xxxx
-
-/**
- *  \brief Whether the auxiliary output buffer is full. This also depends on the mode the
- *  controller is operating in. For PS/2 systems: if set, then is mouse data if you can read
- *  from \ref KEYBOARD_ENCODER_READ_INPUT_BUFFER. If unset, then determines if read form port 0x60 is valid
- *  if value is 0. For AT systems: If set the the OK flag. If unset, then timeout o transmission
- *  from controller to keyboard. May indicate that no keyboard is present.
- */
-#define KEYBOARD_STATUS_REGISTER_AUX_OUTPUT_BUFFER_MASK	0x20	// xx1xxxxx
-
-/**
- *  \brief If set, then a timeout occurred. If not set, then is a OK flag. For a PS/2 system, it is
- *  a general timeout, for a AT system, it is a timeout on transmission from keyboard to keyboard
- *  controller, possibly parity error.
- */
-#define KEYBOARD_STATUS_REGISTER_TIMEOUT_MASK			0x40	// x1xxxxxx
-
-/**
- *  \brief If set, then there was a parity error with the last byte. If not set, then no error.
- */
-#define KEYBOARD_STATUS_REGISTER_PARITY_ERROR_MASK		0x80	// 1xxxxxxx
+enum keyboard_status_register {
+	KEYBOARD_STATUS_REGISTER_OUTPUT_BUFFER_MASK		= 0x01,	/**< xxxxxxx1 | Whether the output buffer is full. If set, then the buffer is full so can be read. If not set, then the buffer isn't full and shouldn't be read. */
+	KEYBOARD_STATUS_REGISTER_INPUT_BUFFER_MASK		= 0x02,	/**< xxxxxx1x | Whether the input buffer is full. If set, then the buffer is full so don't write anything yet. If not set, then  the buffer isn't full and can be written to. */
+	KEYBOARD_STATUS_REGISTER_SYSTEM_FLAGS_MASK		= 0x04,	/**< xxxxx1xx | The system flag that is set when a successful keyboard controller self test is completed. Is unset after a power on reset. */
+	KEYBOARD_STATUS_REGISTER_COMMAND_DATA_MASK		= 0x08,	/**< xxxx1xxx | A flag saying whether the input buffer was data (via port 0x60) or a command (via port 0x64). If set, then was date, else is a command. */
+	KEYBOARD_STATUS_REGISTER_KEYBOARD_LOCK_MASK		= 0x10,	/**< xxx1xxxx | Set if the keyboard is unlocked. If unset, then the keyboard is locked. */
+	KEYBOARD_STATUS_REGISTER_AUX_OUTPUT_BUFFER_MASK	= 0x20,	/**< xx1xxxxx | Whether the auxiliary output buffer is full. This also depends on the mode the controller is operating in. For PS/2 systems: if set, then is mouse data if you can read from \ref KEYBOARD_ENCODER_READ_INPUT_BUFFER. If unset, then determines if read form port 0x60 is valid if value is 0. For AT systems: If set the OK flag. If unset, then time out of transmission from controller to keyboard. May indicate that no keyboard is present. */
+	KEYBOARD_STATUS_REGISTER_TIMEOUT_MASK			= 0x40,	/**< x1xxxxxx | If set, then a time out occurred. If not set, then is a OK flag. For a PS/2 system, it is a general time out, for a AT system, it is a time out on transmission from keyboard to keyboard controller, possibly parity error. */
+	KEYBOARD_STATUS_REGISTER_PARITY_ERROR_MASK		= 0x80	/**< 1xxxxxxx | If set, then there was a parity error with the last byte. If not set, then no error. */
+};
 
 /**
  *  \brief The collection of all (I think) keys on a keyboard. Including multimedia keys.
@@ -122,7 +86,7 @@ enum {
     KEYBOARD_KEY_8,
     KEYBOARD_KEY_9,
     KEYBOARD_KEY_0,
-
+	
     KEYBOARD_KEY_ENTER,
     KEYBOARD_KEY_ESC,
     KEYBOARD_KEY_BACKSPACE,
@@ -140,7 +104,7 @@ enum {
     KEYBOARD_KEY_FULL_STOP,
     KEYBOARD_KEY_SLASH,
 	//KEYBOARD_KEY_HASH,
-
+	
     KEYBOARD_KEY_NUM_SLASH,
     KEYBOARD_KEY_NUM_STAR,
     KEYBOARD_KEY_NUM_MINUS,
@@ -169,7 +133,7 @@ enum {
 	KEYBOARD_KEY_DELETE,
 	KEYBOARD_KEY_END,
 	KEYBOARD_KEY_PAGE_DOWN,
-
+	
     KEYBOARD_KEY_F1,
     KEYBOARD_KEY_F2,
     KEYBOARD_KEY_F3,
@@ -182,11 +146,11 @@ enum {
     KEYBOARD_KEY_F10,
     KEYBOARD_KEY_F11,
     KEYBOARD_KEY_F12,
-
+	
     KEYBOARD_KEY_NUM_LOCK,
     KEYBOARD_KEY_CAPS_LOCK,
     KEYBOARD_KEY_SCROLL_LOCK,
-
+	
     KEYBOARD_KEY_LEFT_CTRL,
     KEYBOARD_KEY_LEFT_SHIFT,
     KEYBOARD_KEY_LEFT_ALT,
@@ -224,7 +188,7 @@ enum {
 	KEYBOARD_KEY_MULTIMEDIA_MY_COMPUTER,
 	KEYBOARD_KEY_MULTIMEDIA_EMAIL,
 	KEYBOARD_KEY_MULTIMEDIA_MEDIA_SELECT,
-
+	
 	KEYBOARD_KEY_UNKNOWN
 };
 
@@ -694,10 +658,9 @@ void kerybaord_encoder_send_command(const uint8_t cmd);
 char key_to_ascii(unsigned char key);
 
 /**
- *  \brief Get the last key that was pressed. This resets the last key pressed to
- *  KEYBOARD_KEY_UNKNOWN.
+ *  \brief Get the last key that was pressed. This resets the last key pressed to \ref KEYBOARD_KEY_UNKNOWN.
  *  
- *  \return The last key thats was pressed.
+ *  \return The last key that's was pressed.
  */
 unsigned char get_last_key_press(void);
 

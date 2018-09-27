@@ -1,65 +1,67 @@
+/**
+ *  \file paging.h
+ *  \brief Functions, definitions and structures for setting up paging.
+ */
 #ifndef INCLUDE_PAGING_H
 #define INCLUDE_PAGING_H
 
 #include <stdint.h>
 #include <stdbool.h>
 
-// -----------------------
-// Page table entry flags.
-// -----------------------
+/**
+ *  \brief The flags used in the page table entry.
+ */
+enum pte_flag_masks {
+	PTE_PRESENT			= 0x001,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1 |  */
+	PTE_WRITABLE		= 0x002,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x |  */
+	PTE_USER_MODE		= 0x004,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxx1xx |  */
+	PTE_WRITE_THOUGH	= 0x008,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxx1xxx |  */
+	PTE_NOT_CACHEABLE	= 0x010,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxx1xxxx |  */
+	PTE_ACCESSED		= 0x020,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xx1xxxxx |  */
+	PTE_DIRTY			= 0x040,		/**< xxxxxxxx xxxxxxxx xxxxxxxx x1xxxxxx |  */
+	PTE_PAT				= 0x080,		/**< xxxxxxxx xxxxxxxx xxxxxxxx 1xxxxxxx |  */
+	PTE_CPU_GLOBAL		= 0x100,		/**< xxxxxxxx xxxxxxxx xxxxxxx1 xxxxxxxx |  */
+	PTE_LEVEL_4_GLOBAL	= 0x200,		/**< xxxxxxxx xxxxxxxx xxxxxx1x xxxxxxxx |  */
+	PTE_PAGE_FRAME		= 0xFFFFF000	/**< 11111111 11111111 11111xxx xxxxxxxx |  */
+};
 
-#define PTE_PRESENT			0x001		// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1
+/**
+ *  \brief The flags used in the page directory entry.
+ */
+enum pde_flag_masks {
+	PDE_PRESENT			= 0x001,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1 |  */
+	PDE_WRITABLE		= 0x002,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x |  */
+	PDE_USER_MODE		= 0x004,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxx1xx |  */
+	PDE_WRITE_THOUGH	= 0x008,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxx1xxx |  */
+	PDE_NOT_CACHEABLE	= 0x010,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxx1xxxx |  */
+	PDE_ACCESSED		= 0x020,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xx1xxxxx |  */
+	PDE_DIRTY			= 0x040,		/**< xxxxxxxx xxxxxxxx xxxxxxxx x1xxxxxx |  */
+	PDE_4MB				= 0x080,		/**< xxxxxxxx xxxxxxxx xxxxxxxx 1xxxxxxx |  */
+	PDE_CPU_GLOBAL		= 0x100,		/**< xxxxxxxx xxxxxxxx xxxxxxx1 xxxxxxxx |  */
+	PDE_LEVEL_4_GLOBAL	= 0x200,		/**< xxxxxxxx xxxxxxxx xxxxxx1x xxxxxxxx |  */
+	PDE_PAGE_FRAME		= 0xFFFFF000	/**< 11111111 11111111 11111xxx xxxxxxxx |  */
+};
 
-#define PTE_WRITABLE		0x002		// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x
-
-#define PTE_USER_MODE		0x004		// xxxxxxxx xxxxxxxx xxxxxxxx xxxxx1xx
-
-#define PTE_WRITE_THOUGH	0x008		// xxxxxxxx xxxxxxxx xxxxxxxx xxxx1xxx
-
-#define PTE_NOT_CACHEABLE	0x010		// xxxxxxxx xxxxxxxx xxxxxxxx xxx1xxxx
-
-#define PTE_ACCESSED		0x020		// xxxxxxxx xxxxxxxx xxxxxxxx xx1xxxxx
-
-#define PTE_DIRTY			0x040		// xxxxxxxx xxxxxxxx xxxxxxxx x1xxxxxx
-
-#define PTE_PAT				0x080		// xxxxxxxx xxxxxxxx xxxxxxxx 1xxxxxxx
-
-#define PTE_CPU_GLOBAL		0x100		// xxxxxxxx xxxxxxxx xxxxxxx1 xxxxxxxx
-
-#define PTE_LEVEL_4_GLOBAL	0x200		// xxxxxxxx xxxxxxxx xxxxxx1x xxxxxxxx
-
-#define PTE_PAGE_FRAME		0xFFFFF000	// 11111111 11111111 11111xxx xxxxxxxx
-
-// ---------------------------
-// Page directory entry flags.
-// ---------------------------
-
-#define PDE_PRESENT			0x01		// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1
-
-#define PDE_WRITABLE		0x02		// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x
-
-#define PDE_USER_MODE		0x04		// xxxxxxxx xxxxxxxx xxxxxxxx xxxxx1xx
-
-#define PDE_WRITE_THOUGH	0x08		// xxxxxxxx xxxxxxxx xxxxxxxx xxxx1xxx
-
-#define PDE_NOT_CACHEABLE	0x10		// xxxxxxxx xxxxxxxx xxxxxxxx xxx1xxxx
-
-#define PDE_ACCESSED		0x20		// xxxxxxxx xxxxxxxx xxxxxxxx xx1xxxxx
-
-#define PDE_DIRTY			0x40		// xxxxxxxx xxxxxxxx xxxxxxxx x1xxxxxx
-
-#define PDE_4MB				0x80		// xxxxxxxx xxxxxxxx xxxxxxxx 1xxxxxxx
-
-#define PDE_CPU_GLOBAL		0x100		// xxxxxxxx xxxxxxxx xxxxxxx1 xxxxxxxx
-
-#define PDE_LEVEL_4_GLOBAL	0x200		// xxxxxxxx xxxxxxxx xxxxxx1x xxxxxxxx
-
-#define PDE_PAGE_FRAME		0xFFFFF000	// 11111111 11111111 11111xxx xxxxxxxx
-
+/**
+ *  \brief 
+ */
 #define PAGE_DIRECTORY_INDEX(x)			(((x) >> 22) & 0x3ff)
+
+/**
+ *  \brief 
+ */
 #define PAGE_TABLE_INDEX(x)				(((x) >> 12) & 0x3ff)
+
+/**
+ *  \brief 
+ */
 #define PAGE_GET_PHYSICAL_ADDRESS(x)	(*x & ~0xfff)
 
+/**
+ *  \struct pte_t
+ *  
+ *  \brief The structure for which the memory map is formatted by the BIOS.
+ */
 typedef struct {
 	bool present : 1;
 	bool writeable : 1;
@@ -72,6 +74,11 @@ typedef struct {
 	uint32_t frame : 20;
 } __attribute__((__packed__)) pte_t;
 
+/**
+ *  \struct pde_t
+ *  
+ *  \brief The structure for which the memory map is formatted by the BIOS.
+ */
 typedef struct {
 	bool present : 1;
 	bool writeable : 1;
@@ -85,10 +92,20 @@ typedef struct {
 	uint32_t frame : 20;
 } __attribute__((__packed__)) pde_t;
 
+/**
+ *  \struct page_table_t
+ *  
+ *  \brief The structure for which the memory map is formatted by the BIOS.
+ */
 typedef struct {
 	pte_t pages[1024];
 } __attribute__((aligned(4096))) page_table_t;
 
+/**
+ *  \struct page_directory_t
+ *  
+ *  \brief The structure for which the memory map is formatted by the BIOS.
+ */
 typedef struct {
 	pde_t tables[1024];
 } __attribute__((aligned(4096))) page_directory_t;

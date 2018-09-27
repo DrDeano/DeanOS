@@ -1,7 +1,6 @@
 /**
  *  \file idt.h
- *  \brief The Interrupt Descriptor table that contains all the interrupt handlers that is index
- *  by the CPU.
+ *  \brief Functions, definitions and structures for setting up the Interrupt Descriptor Table.
  */
 #ifndef INCLUDE_IDT_H
 #define INCLUDE_IDT_H
@@ -20,19 +19,19 @@
 #define IDT_SIZE			(sizeof(idt_entry_t) * IDT_ENTRIES)
 
 /**
- * \brief The IDT task gate flag
+ * \brief The IDT task gate flag.
  */
 #define IDT_TASK_GATE		0x05
 
 /**
- * \brief The IDT interrupt gate flag
+ * \brief The IDT interrupt gate flag.
  */
-#define IDT_INTERRUPT_GATE	0x0e
+#define IDT_INTERRUPT_GATE	0x0E
 
 /**
- * \brief The IDT trap gate flag
+ * \brief The IDT trap gate flag.
  */
-#define IDT_TRAP_GATE		0x0f
+#define IDT_TRAP_GATE		0x0F
 
 /**
  *  \struct idt_entry_t
@@ -46,10 +45,9 @@ typedef struct {
 	
 	// Flags
 	uint8_t idt_gate_type : 4;	/**< The IDT gate type. */
-	bool storage_segment : 1;	/**< Must be 0 for interrupt gates. */
+	bool storage_segment : 1;	/**< Must be 0 for interrupt and trap gates. */
 	uint8_t privilege : 2;		/**< The minimum ring level that the calling code must have to run the handler. So user code may not be able to run some interrupts. */
 	bool present : 1;			/**< Whether the IDT entry is present. */
-	//uint8_t flags : 8;
 	
     uint16_t base_high : 16;	/**< The upper 16 bits of the base address of the interrupt handler offset. */
 } __attribute__((__packed__)) idt_entry_t;
@@ -71,7 +69,7 @@ typedef struct {
  *  \param [in] index The index into the IDT for which the interrupt handler is to be loaded.
  *  \param [in] base The base address for the handler to be loaded at index.
  */
-void idt_open_interrupt_gate(uint8_t index, uintptr_t base);
+void idt_open_interrupt_gate(uint8_t index, uint32_t base);
 
 /**
  *  \brief Close a interrupt gate for a particular entry.
@@ -81,8 +79,8 @@ void idt_open_interrupt_gate(uint8_t index, uintptr_t base);
 void idt_close_interrupt_gate(uint8_t index);
 
 /**
- *  \brief Initialise the IDT by first creating 256 blank entries and loading the location and size
- *  of the IDT into the CPU
+ *  \brief Initialise the IDT by first creating \ref IDT_ENTRIES blank entries and loading the
+ *  location and size of the IDT into the CPU.
  */
 void idt_init(void);
 

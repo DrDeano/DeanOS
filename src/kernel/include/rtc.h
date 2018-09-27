@@ -1,6 +1,6 @@
 /**
  *  \file rtc.h
- *  \brief The interface for the Real Time Clock using the CMOS.
+ *  \brief Functions, definitions and structures for setting up the Real Time Clock using the CMOS.
  */
 #ifndef INCLUDE_RTC_H
 #define INCLUDE_RTC_H
@@ -16,7 +16,7 @@
 
 /**
  *  \struct rtc_date_time_t
- *
+ *  
  *  \brief The structure for storing the date and time.
  */
 typedef struct {
@@ -32,38 +32,38 @@ typedef struct {
 
 /**
  *  \brief Given a \ref rtc_date_time_t structure, set all values to zero.
- *
- *  \parma [in] d1 The date and time structure to be initialised to zero.
- *
+ *  
+ *  \param [in] d1 The date and time structure to be initialised to zero.
+ *  
  *  \return The same pointer as the one given as the parameter.
  */
 rtc_date_time_t * zero_date_time(rtc_date_time_t * d1);
 
 /**
  *  \brief Copy the date and time values from d2 into d1.
- *
- *  \parma [in] d1 The date and time structure to copy into.
- *  \parma [in] d2 The date and time structure to copy from.
- *
+ *  
+ *  \param [in] d1 The date and time structure to copy into.
+ *  \param [in] d2 The date and time structure to copy from.
+ *  
  *  \return The pointer to d1. If d1 or d2 are NULL, then the return value will also be NULL.
  */
 rtc_date_time_t * copy_date_time(rtc_date_time_t * d1, rtc_date_time_t * d2);
 
 /**
  *  \brief Set the rate at which the CMOS will generate interrupts. Where rate must be between 0
- *  and 15. The rate is calculated by the formula: ?? 2^(rate - 1) ??.
- *  \todo Correct formula.
- *  \parma [in] rate
+ *  and 15. The rate is calculated by the formula: 2^(rate - 1).
+ *  
+ *  \param [in] rate The rate which the RTC timer operates at using the formula: 2^(rate - 1).
  */
 void set_rate(uint8_t rate);
 
 /**
  *  \brief Read the current date and time from the CMOS chip and store then in the given structure.
- *
- *  \parma [in] date              The date and time structure which the values will be placed in.
- *  \parma [in] hour_24           Whether the time is to be in 24hr format or 12hr format.
- *  \parma [in] day_light_savings Whether it is currently daylight saving. Adding an hour is it is.
- *
+ *  
+ *  \param [in] date              The date and time structure which the values will be placed in.
+ *  \param [in] hour_24h          Whether the time is to be in 24hr format or 12hr format.
+ *  \param [in] day_light_savings Whether it is currently daylight saving. Adding an hour is it is.
+ *  
  *  \return The pointer to the date structure.
  */
 rtc_date_time_t * read_rtc(rtc_date_time_t * date, bool hour_24h, bool day_light_savings);

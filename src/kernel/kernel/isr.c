@@ -2,7 +2,7 @@
 
 #include <idt.h>
 #include <isr.h>
-#include <main.h>
+#include <panic.h>
 
 extern void _isr00();
 extern void _isr01();
@@ -38,8 +38,8 @@ extern void _isr30();
 extern void _isr31();
 
 /**
- *  A list of string that say what exception has been raised so can be printed to the user so that
- *  they know what happened.
+ *  \brief A list of string that say what exception has been raised so can be printed to the user so
+ *  that they know what happened.
  */
 static char * exception_msg[] = {
 	"Divide By Zero",
@@ -77,7 +77,7 @@ static char * exception_msg[] = {
 };
 
 /**
- *  The list of handlers for each exception
+ *  \brief The list of handlers for each exception.
  */
 static isr_handler isr_handlers[ISR_TOTAL] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -112,37 +112,37 @@ void isr_uninstall_handler(uint8_t isr_num) {
 	isr_handlers[isr_num] = 0;
 }
 
-void isr_init() {
-	idt_open_interrupt_gate(0, (uintptr_t) &_isr00);
-	idt_open_interrupt_gate(1, (uintptr_t) &_isr01);
-	idt_open_interrupt_gate(2, (uintptr_t) &_isr02);
-	idt_open_interrupt_gate(3, (uintptr_t) &_isr03);
-	idt_open_interrupt_gate(4, (uintptr_t) &_isr04);
-	idt_open_interrupt_gate(5, (uintptr_t) &_isr05);
-	idt_open_interrupt_gate(6, (uintptr_t) &_isr06);
-	idt_open_interrupt_gate(7, (uintptr_t) &_isr07);
-	idt_open_interrupt_gate(8, (uintptr_t) &_isr08);
-	idt_open_interrupt_gate(9, (uintptr_t) &_isr09);
-	idt_open_interrupt_gate(10, (uintptr_t) &_isr10);
-	idt_open_interrupt_gate(11, (uintptr_t) &_isr11);
-	idt_open_interrupt_gate(12, (uintptr_t) &_isr12);
-	idt_open_interrupt_gate(13, (uintptr_t) &_isr13);
-	idt_open_interrupt_gate(14, (uintptr_t) &_isr14);
-	idt_open_interrupt_gate(15, (uintptr_t) &_isr15);
-	idt_open_interrupt_gate(16, (uintptr_t) &_isr16);
-	idt_open_interrupt_gate(17, (uintptr_t) &_isr17);
-	idt_open_interrupt_gate(18, (uintptr_t) &_isr18);
-	idt_open_interrupt_gate(19, (uintptr_t) &_isr19);
-	idt_open_interrupt_gate(20, (uintptr_t) &_isr20);
-	idt_open_interrupt_gate(21, (uintptr_t) &_isr21);
-	idt_open_interrupt_gate(22, (uintptr_t) &_isr22);
-	idt_open_interrupt_gate(23, (uintptr_t) &_isr23);
-	idt_open_interrupt_gate(24, (uintptr_t) &_isr24);
-	idt_open_interrupt_gate(25, (uintptr_t) &_isr25);
-	idt_open_interrupt_gate(26, (uintptr_t) &_isr26);
-	idt_open_interrupt_gate(27, (uintptr_t) &_isr27);
-	idt_open_interrupt_gate(28, (uintptr_t) &_isr28);
-	idt_open_interrupt_gate(29, (uintptr_t) &_isr29);
-	idt_open_interrupt_gate(20, (uintptr_t) &_isr30);
-	idt_open_interrupt_gate(31, (uintptr_t) &_isr31);
+void isr_init(void) {
+	idt_open_interrupt_gate(0, (uint32_t) &_isr00);
+	idt_open_interrupt_gate(1, (uint32_t) &_isr01);
+	idt_open_interrupt_gate(2, (uint32_t) &_isr02);
+	idt_open_interrupt_gate(3, (uint32_t) &_isr03);
+	idt_open_interrupt_gate(4, (uint32_t) &_isr04);
+	idt_open_interrupt_gate(5, (uint32_t) &_isr05);
+	idt_open_interrupt_gate(6, (uint32_t) &_isr06);
+	idt_open_interrupt_gate(7, (uint32_t) &_isr07);
+	idt_open_interrupt_gate(8, (uint32_t) &_isr08);
+	idt_open_interrupt_gate(9, (uint32_t) &_isr09);
+	idt_open_interrupt_gate(10, (uint32_t) &_isr10);
+	idt_open_interrupt_gate(11, (uint32_t) &_isr11);
+	idt_open_interrupt_gate(12, (uint32_t) &_isr12);
+	idt_open_interrupt_gate(13, (uint32_t) &_isr13);
+	idt_open_interrupt_gate(14, (uint32_t) &_isr14);
+	idt_open_interrupt_gate(15, (uint32_t) &_isr15);
+	idt_open_interrupt_gate(16, (uint32_t) &_isr16);
+	idt_open_interrupt_gate(17, (uint32_t) &_isr17);
+	idt_open_interrupt_gate(18, (uint32_t) &_isr18);
+	idt_open_interrupt_gate(19, (uint32_t) &_isr19);
+	idt_open_interrupt_gate(20, (uint32_t) &_isr20);
+	idt_open_interrupt_gate(21, (uint32_t) &_isr21);
+	idt_open_interrupt_gate(22, (uint32_t) &_isr22);
+	idt_open_interrupt_gate(23, (uint32_t) &_isr23);
+	idt_open_interrupt_gate(24, (uint32_t) &_isr24);
+	idt_open_interrupt_gate(25, (uint32_t) &_isr25);
+	idt_open_interrupt_gate(26, (uint32_t) &_isr26);
+	idt_open_interrupt_gate(27, (uint32_t) &_isr27);
+	idt_open_interrupt_gate(28, (uint32_t) &_isr28);
+	idt_open_interrupt_gate(29, (uint32_t) &_isr29);
+	idt_open_interrupt_gate(20, (uint32_t) &_isr30);
+	idt_open_interrupt_gate(31, (uint32_t) &_isr31);
 }

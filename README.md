@@ -19,7 +19,7 @@ The makefile is a shambles, so any suggestions on better makefiles are appreciat
 * `imdisk` - Windows cmd for creating and mounting the floppy image
 * `copy` - Windows cms for copying files onto the floppy image
 
-I'm sorry that this will hurt people to see as using Windows and Linux together, so if anyone has suggestions and/or better makefile that works that I can use, please let me know. Makefiles are new to me so any changes made, can you comment them so I can understand what is going on. Especially a makefile that just uses Linux commands would be best. I have tried using `dd` for creating the boot sector but couldn't get it working correctly, so any way of getting ride of some Windows commands will be good.
+I'm sorry that this will hurt people to see as using Windows and Linux together, so if anyone has suggestions and/or better makefile that works that I can use, please let me know. Makefiles are new to me so any changes made, can you comment them so I can understand what is going on. Especially a makefile that just uses Linux commands would be best. I have tried using `dd` for creating the boot sector but couldn't get it working correctly, so any way of getting ride of some Windows commands will be good. You can email me at egd536@student.bham.ac.uk if you have any changes.
 
 ## Testing
 You can run `make debug` which will create all the files needed and run in the qemu emulator. You can then attach a GDB debugger by adding the lines into .gdbinit or type the commands directly:

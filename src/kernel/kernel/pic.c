@@ -29,37 +29,9 @@ void pic_send_end_of_interrupt(uint8_t irq) {
 	if (irq >= 8) {
 		pic_send_command_slave(PIC_OCW2_END_OF_INTERRUPT);
 	}
-
+	
 	// Then send an EOI to the master interrupt controller
 	pic_send_command_master(PIC_OCW2_END_OF_INTERRUPT);
-}
-
-void irq_set_mask(uint8_t irq_num) {
-    uint16_t port;
-    uint8_t value;
-	
-    if(irq_num < 8) {
-        port = PIC_INTERRUPT_MASK_REG_MASTER;
-    } else {
-        port = PIC_INTERRUPT_MASK_REG_SLAVE;
-        irq_num -= 8;
-    }
-    value = in_port_byte(port) | (1 << irq_num);
-    out_port_byte(port, value);        
-}
-
-void irq_clear_mask(uint8_t irq_num) {
-    uint16_t port;
-    uint8_t value;
-	
-    if(irq_num < 8) {
-        port = PIC_INTERRUPT_MASK_REG_MASTER;
-    } else {
-        port = PIC_INTERRUPT_MASK_REG_SLAVE;
-        irq_num -= 8;
-    }
-    value = in_port_byte(port) & ~(1 << irq_num);
-    out_port_byte(port, value);        
 }
 
 void pic_remap_irq(void) {

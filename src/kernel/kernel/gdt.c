@@ -2,21 +2,9 @@
 #include <string.h>
 #include <stdint.h>
 
-/**
- *  The GDT entry table of \ref GDT_ENTRIES entries.
- */
-static gdt_entry_t gdt_entries[GDT_ENTRIES];
-
-/**
- *  The GDT pointer that the CPU is loaded with that contains the base address of the GDT and the
- *  side.
- */
-static gdt_ptr_t gdt_ptr;
-
-/**
- *  The task state segment entry.
- */
-static tss_t tss;
+static gdt_entry_t gdt_entries[GDT_ENTRIES];	/**< The GDT entry table of \ref GDT_ENTRIES entries. */
+static gdt_ptr_t gdt_ptr;						/**< The GDT pointer that the CPU is loaded with that contains the base address of the GDT and the size. */
+static tss_t tss;								/**< The task state segment entry. */
 
 /**
  *  \brief Inline assembly for loading the GDT and refreshing the code segment with the code
@@ -50,20 +38,20 @@ static inline void ltr(void) {
  *  \param [in] ring_level Which ring level the code or data segment is to be created for.
  */
 static void gdt_set_entry(size_t index, bool is_code, uint8_t ring_level) {
-	// Set up base address. Aways 0
+	// Set up base address. Always 0
     gdt_entries[index].base_low = 0;
 	gdt_entries[index].base_high = 0;
 	
-	// Set up limits. Aways 0xFFFFF
+	// Set up limits. Always 0xFFFFF
 	gdt_entries[index].limit_low = 0xFFFF;
 	gdt_entries[index].limit_high = 0xF;
 	
 	// Set up access bits
-	gdt_entries[index].writable = true;
+	gdt_entries[index].writeable = true;
 	gdt_entries[index].direction_conforming = false;
 	gdt_entries[index].executable = is_code;
 	gdt_entries[index].descriptor_bit = true;
-	gdt_entries[index].privilege = ring_level; // But as is an internal function, will only be one of 4 values. //(0x03 & ring_level); // Only the lower 2 bits are used to mask off the upper bits as they shouldn't be set.
+	gdt_entries[index].privilege = (0x03 & ring_level);
 	gdt_entries[index].present = true;
 	
 	// Set up flags
@@ -87,7 +75,7 @@ static void tss_set_entry(void) {
 	
 	// Set up access bits
 	gdt_entries[GDT_TSS_INDEX].accessed = true;
-	gdt_entries[GDT_TSS_INDEX].writable = false;
+	gdt_entries[GDT_TSS_INDEX].writeable = false;
 	gdt_entries[GDT_TSS_INDEX].direction_conforming = false;
 	gdt_entries[GDT_TSS_INDEX].executable = true;
 	gdt_entries[GDT_TSS_INDEX].descriptor_bit = false;
@@ -117,7 +105,7 @@ static void gdt_setup(void) {
 	gdt_set_entry(GDT_USER_CODE_INDEX, true, GDT_PRIVILEGE_RING_3);
 	gdt_set_entry(GDT_USER_DATA_INDEX, false, GDT_PRIVILEGE_RING_3);
 	
-	// Setup TSS
+	// Set up TSS
 	tss_set_entry();
 }
 
@@ -140,10 +128,6 @@ static void tss_setup(void) {
 	tss.SS0 = GDT_KERNEL_DATA_OFFSET;
 	tss.ESP0 = 0;
 	tss.IO_Permissions_Base_Offset = (uint16_t) sizeof(tss_t);
-	//tss.ES = GDT_KERNEL_DATA_OFFSET;
-	//tss.CS = GDT_KERNEL_CODE_OFFSET;
-	//tss.FS = 0x13; // kernel data segment
-	//tss.GS = 0x13; // kernel data segment
 }
 
 void gdt_init(void) {
@@ -155,9 +139,9 @@ void gdt_init(void) {
 	
 	gdt_setup();
 	
-	// Load the gdt table
+	// Load the GST table
 	gdt_load();
 	
-	// Load the tss
+	// Load the TSS
 	ltr();
 }

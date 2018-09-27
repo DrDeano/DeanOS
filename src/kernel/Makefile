@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -O2 -c -ffreestanding -m32 -masm=intel -I../libc/include -Iinclude
+CFLAGS = -Wall -Wextra -Wno-packed-bitfield-compat -std=c11 -O2 -c -ffreestanding -m32 -masm=intel -I../libc/include -Iinclude
 
 LDMAP = kernel.map
 LDSCRIPT = kernel.ld
@@ -15,23 +15,24 @@ SRC = kernel
 OBJS = $(BIN)/start.o \
 	$(BIN)/interrupt_service_routines.o \
 	$(BIN)/interrupt_request.o \
-	$(BIN)/kernel_main.o \
 	$(BIN)/boot.o \
-	$(BIN)/pmm.o \
-	$(BIN)/vga.o \
-	$(BIN)/tty.o \
 	$(BIN)/gdt.o \
 	$(BIN)/idt.o \
-	$(BIN)/pic.o \
 	$(BIN)/isr.o \
 	$(BIN)/irq.o \
+	$(BIN)/pic.o \
+	$(BIN)/vga.o \
+	$(BIN)/tty.o \
 	$(BIN)/pit.o \
 	$(BIN)/keyboard.o \
+	$(BIN)/pmm.o \
 	$(BIN)/paging.o \
 	$(BIN)/cmos.o \
 	$(BIN)/rtc.o \
 	$(BIN)/speaker.o \
-	$(BIN)/floppy.o
+	$(BIN)/floppy.o \
+	$(BIN)/panic.o \
+	$(BIN)/kernel_main.o
 
 all: clean $(BIN)/kernel.bin | $(BIN)
 
