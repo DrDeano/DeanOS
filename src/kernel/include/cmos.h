@@ -32,6 +32,11 @@
 #define CMOS_DATA			0x71
 
 /**
+ *  \brief The register for getting the type of floppy device connected to the computer.
+ */
+#define CMOS_FLOPPY_TYPE	0x10
+
+/**
  *  \brief The list of registers that access values used in the real time clock.
  */
 enum cmos_rtc_registers {

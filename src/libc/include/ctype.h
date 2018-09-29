@@ -57,7 +57,7 @@ extern "C"
  *  \brief The list of all character represented as the masks so can be masked off to determine,
  *  for example, is a digit or not.
  */
-static char characters[256] {
+static char characters[257] = {
 	CONTROL_CHAR,						// 0x00 (NUL)
 	CONTROL_CHAR,						// 0x01 (SOH)
 	CONTROL_CHAR,						// 0x02 (STX)
@@ -150,7 +150,7 @@ static char characters[256] {
 	UPPER_CHAR,							// 0x59 Y
 	UPPER_CHAR,							// 0x5A Z
 	PUNCTUATION_CHAR,					// 0x5B [
-	PUNCTUATION_CHAR,					// 0x5C \ 
+	PUNCTUATION_CHAR,					// 0x5C '\'
 	PUNCTUATION_CHAR,					// 0x5D ]
 	PUNCTUATION_CHAR,					// 0x5E ^
 	PUNCTUATION_CHAR,					// 0x5F _
@@ -314,7 +314,7 @@ static char characters[256] {
 	EXTENDED_CHAR,						// 0xFC
 	EXTENDED_CHAR,						// 0xFD
 	EXTENDED_CHAR,						// 0xFE
-	EXTENDED_CHAR,						// 0xFF
+	EXTENDED_CHAR						// 0xFF
 };
 
 /**

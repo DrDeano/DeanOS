@@ -7,6 +7,7 @@
 
 #include <sys/cdefs.h>
 #include <stdnoreturn.h>
+#include <ctype.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,6 +17,15 @@ extern "C" {
  *  \brief Causes an abnormal program termination.
  */
 noreturn void abort(void);
+
+/**
+ *  \brief Convert a string to an integer.
+ *  
+ *  \param [in] str The string to convert.
+ *  
+ *  \return The integer.
+ */
+int atoi(const char * str);
 
 #ifdef __cplusplus
 }

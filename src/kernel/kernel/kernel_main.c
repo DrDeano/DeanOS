@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdnoreturn.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <vga.h>
@@ -445,9 +446,11 @@ static void kernel_task(void) {
 			kprintf("   \\     |     /  \n");
 			kprintf("    |    |    |   \n");
 		} else if(strcmp(command_buffer, "read") == 0) {
-			uint8_t * sector = floppy_read_sector(1);
+			//command_buffer += 5;
+			//uint32_t lba = atoi(command_buffer + 5);
+			uint8_t * sector = floppy_read_sector(0);
 			if(sector) {
-				for(int i = 1; i <= 128; i++) {
+				for(int i = 1; i <= 512; i++) {
 					kprintf("0x%2X ", (uint32_t) sector[i - 1]);
 					if(i % 15 == 0 && i != 1) {
 						kprintf("\n");
@@ -467,7 +470,10 @@ static void kernel_task(void) {
 	}
 }
 
-void pmm_test(void) {
+/**
+ *  \brief Test physical memory manager by allocating and freeing block of memory.
+ */
+static void pmm_test(void) {
 	uint32_t * p1 = (uint32_t *) pmm_alloc_block();
 	kprintf("p1 allocated at 0x%0x\n", p1);
 	
@@ -506,6 +512,9 @@ void pmm_test(void) {
 	pmm_free_blocks(p6, 4);
 }
 
+/**
+ *  \brief Test the paging by causing a page fault.
+ */
 void paging_test(void) {
 	// This should page fault as not mapped
 	int * x = (int *) 0x4000000; // 1GB
@@ -603,7 +612,7 @@ noreturn void kernel_main(void) {
 	
 	kprintf("Total number of blocks: %u. Used blocks: %u. Free blocks: %u\n", pmm_get_max_blocks(), pmm_get_used_blocks(), pmm_get_free_blocks());
 	
-	//pmm_test();
+	pmm_test();
 	
 	paging_init();
 	

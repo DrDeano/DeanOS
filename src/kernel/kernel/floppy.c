@@ -4,26 +4,29 @@
 #include <pic.h>
 #include <irq.h>
 #include <pit.h>
+#include <cmos.h>
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 
-static volatile bool floppy_irq_fired = false;
-
-static uint8_t current_drive = 0;
+static volatile bool floppy_irq_fired = false;	/**< Whether the floppy IRQ was called to determine when a command has finished. */
+static uint8_t current_drive = 0;				/**< The current drive. */
 
 /**
  *  \brief The PIT handler that is called when the PIT creates an interrupt.
  *
- *  \param [in] regs The register of the CPU when the interrupt was called
+ *  \param [in] regs The register of the CPU when the interrupt was called.
  */
 static void floppy_handler(regs_t * regs) {
 	(void) regs;		// Not using the registers
 	floppy_irq_fired = true;
 }
 
+/**
+ *  \brief The function that waits until the floppy IRQ is called.
+ */
 static void floppy_wait_irq(void) {
 	while(!floppy_irq_fired) {
 		__asm__ __volatile__ ("sti");
@@ -33,6 +36,9 @@ static void floppy_wait_irq(void) {
 	floppy_irq_fired = false;
 }
 
+/**
+ *  \brief Initiate the floppy drive controller to use DMA.
+ */
 static void floppy_init_dma(void) {
 	out_port_byte(0x0A, 0x06);	// Mask DMA channel 2
 	out_port_byte(0x0C, 0xFF);	// Reset master flip-flop
@@ -45,31 +51,50 @@ static void floppy_init_dma(void) {
 	out_port_byte(0x0A, 0x02);	// Unmask DMA channel 2
 }
 
+/**
+ *  \brief Read the DMA.
+ */
 static void floppy_dma_read(void) {
 	out_port_byte(0x0A, 0x06);	// Mask DMA channel 2
 	out_port_byte(0x0B, 0x56);	// Single transfer, address increment, autoinit, read, channel 2
 	out_port_byte(0x0A, 0x02);	// Unmask DMA channel 2
 }
 
-static void floppy_dma_write(void) {
-	out_port_byte(0x0A, 0x06);	// Mask DMA channel 2
-	out_port_byte(0x0B, 0x5A);	// Single transfer, address increment, autoinit, read, channel 2
-	out_port_byte(0x0A, 0x02);	// Unmask DMA channel 2
-}
+/**
+ *  \brief Write to the DMA.
+ */
+//static void floppy_dma_write(void) {
+//	out_port_byte(0x0A, 0x06);	// Mask DMA channel 2
+//	out_port_byte(0x0B, 0x5A);	// Single transfer, address increment, autoinit, read, channel 2
+//	out_port_byte(0x0A, 0x02);	// Unmask DMA channel 2
+//}
 
+/**
+ *  \brief Read the main status register.
+ *  
+ *  \return The value in the main status register.
+ */
 static uint8_t floppy_read_status(void) {
 	return in_port_byte(FLOPPY_MAIN_STATUS_REGISTER);
 }
 
+/**
+ *  \brief Write a value to the digital output register.
+ *  
+ *  \param [in] val The value to write.
+ */
 static void floppy_write_dor(uint8_t val) {
 	out_port_byte(FLOPPY_DIGITAL_OUTPUT_REGISTER, val);
 }
 
+/**
+ *  \brief Send a command to the data register.
+ *  
+ *  \param [in] cmd The value to write.
+ *  
+ *  \todo Maybe change to have a time out and return error if fail.
+ */
 static void floppy_send_command(uint8_t cmd) {
-    /**
-	 * \todo Maybe change to have a time out and return error if fail
-     */
-
     while(1) {
 		if(floppy_read_status() & FLOPPY_MSR_DATA_REG_READY) {
 			return out_port_byte(FLOPPY_DATA_FIFO, cmd);
@@ -77,11 +102,14 @@ static void floppy_send_command(uint8_t cmd) {
     }
 }
 
+/**
+ *  \brief Read data from the data register.
+ *  
+ *  \return The content of the data register.
+ *  
+ *  \todo Maybe change to have a time out and return error if fail.
+ */
 static uint8_t floppy_read_data(void) {
-	/**
-	 * \todo Maybe change to have a time out and return error if fail
-     */
-
     while(1) {
 		if(floppy_read_status() & FLOPPY_MSR_DATA_REG_READY) {
 			return in_port_byte(FLOPPY_DATA_FIFO);
@@ -89,10 +117,21 @@ static uint8_t floppy_read_data(void) {
     }
 }
 
+/**
+ *  \brief Write to the floppy configuration control register.
+ *  
+ *  \param [in] val The value to write.
+ */
 static void floppy_write_ccr(uint8_t val) {
 	out_port_byte(FLOPPY_CONFIGURATION_CONTROL_REGISTER, val);
 }
 
+/**
+ *  \brief 
+ *  
+ *  \param [in] status_reg_0 
+ *  \param [in] cylinder      
+ */
 static void floppy_check_interrupt(uint8_t * status_reg_0, uint8_t * cylinder) {
 	floppy_send_command(FLOPPY_CMD_CHECK_INTERRUPT);
 
@@ -100,6 +139,14 @@ static void floppy_check_interrupt(uint8_t * status_reg_0, uint8_t * cylinder) {
 	*cylinder = floppy_read_data();
 }
 
+/**
+ *  \brief 
+ *  
+ *  \param [in] cyl  
+ *  \param [in] head 
+ *  
+ *  \return 
+ */
 static uint8_t floppy_seek(uint8_t cyl, uint8_t head) {
 	uint8_t status_reg_0;
 	uint8_t cylinder;
@@ -124,6 +171,14 @@ static uint8_t floppy_seek(uint8_t cyl, uint8_t head) {
 	return -1;
 }
 
+/**
+ *  \brief 
+ *  
+ *  \param [in] step_rate   
+ *  \param [in] load_time   
+ *  \param [in] unload_time 
+ *  \param [in] dma         
+ */
 static void floppy_drive_data(uint32_t step_rate, uint32_t load_time, uint32_t unload_time, bool dma) {
 	floppy_send_command(FLOPPY_CMD_SPECIFY);
 
@@ -132,15 +187,25 @@ static void floppy_drive_data(uint32_t step_rate, uint32_t load_time, uint32_t u
 	floppy_send_command((load_time << 1) | dma);
 }
 
+/**
+ *  \brief Disable the floppy drive.
+ */
 static void floppy_disable(void) {
 	floppy_write_dor(0x00);
 }
 
+/**
+ *  \brief Enable the floppy drive.
+ */
 static void floppy_enable(void) {
 	floppy_write_dor(FLOPPY_DOR_RESET | FLOPPY_DOR_DMA);
 }
 
 /**
+ *  \brief Turn on or off the current drive motor to spin the floppy read for reading or writing.
+ *  
+ *  \param [in] enable Whether to turn on or off the drive motor. 
+ *  
  *  \todo Add error code
  */
 static void floppy_motor(bool enable) {
@@ -174,6 +239,14 @@ static void floppy_motor(bool enable) {
 	pit_wait(300);
 }
 
+/**
+ *  \brief Calibrate the floppy drive.
+ *  
+ *  \param [in] drive The drive to calibrate.
+ *  
+ *  \return Whether the calibration was successful. -2 for drive number greater then 3. -1 for
+ *  failed calibration, didn't return to cylinder 0. 0 for success.
+ */
 static int floppy_calibrate(uint8_t drive) {
 	uint8_t status_reg_0;
 	uint8_t cylinder;
@@ -203,6 +276,9 @@ static int floppy_calibrate(uint8_t drive) {
     return -1;
 }
 
+/**
+ *  \brief Reset the current floppy drive.
+ */
 static void floppy_reset(void) {
 	uint8_t status_reg_0;
 	uint8_t cylinder;
@@ -224,18 +300,16 @@ static void floppy_reset(void) {
 	floppy_calibrate(current_drive);
 }
 
-void floppy_set_working_drive(uint8_t drive) {
-	if(drive > 3) {
-		return;
-	}
-	current_drive = drive;
-}
-
-uint8_t floppy_get_working_drive(void) {
-	return current_drive;
-}
-
-static void floppy_lba_to_chs(int lba, uint8_t * head, uint8_t * track, uint8_t * sector) {
+/**
+ *  \brief Convert the logical block value to the head, track and sector values to be used to
+ *  read/write to the floppy drive.
+ *  
+ *  \param [in]  lba    The logical block index to convert.
+ *  \param [out] head   The head value.
+ *  \param [out] track  The track value.
+ *  \param [out] sector The sector value.
+ */
+static void floppy_lba_to_chs(uint32_t lba, uint8_t * head, uint8_t * track, uint8_t * sector) {
 	*head = (lba % (2 * FLOPPY_144_SECTORS_PER_TRACK)) / FLOPPY_144_SECTORS_PER_TRACK;
 	*track = lba / (2 * FLOPPY_144_SECTORS_PER_TRACK);
 	*sector = (lba % (2 * FLOPPY_144_SECTORS_PER_TRACK)) % FLOPPY_144_SECTORS_PER_TRACK + 1;
@@ -245,6 +319,13 @@ static void floppy_lba_to_chs(int lba, uint8_t * head, uint8_t * track, uint8_t 
 	//*head = (lba / FLOPPY_144_SECTORS_PER_TRACK) % FLOPPY_144_NUMBER_OF_HEADS
 }
 
+/**
+ *  \brief Read a sector (512 bytes) off the floppy.
+ *  
+ *  \param [in] head   The head value.
+ *  \param [in] track  The track value.
+ *  \param [in] sector The sector value.
+ */
 static void floppy_read_sector_chs(uint8_t head, uint8_t track, uint8_t sector) {
 	uint8_t status_reg_0;
 	uint8_t cylinder;
@@ -270,7 +351,90 @@ static void floppy_read_sector_chs(uint8_t head, uint8_t track, uint8_t sector) 
 	floppy_check_interrupt(&status_reg_0, &cylinder);
 }
 
-uint8_t * floppy_read_sector(int sector_lba) {
+/**
+ *  \brief Detect what drive is connected to the computer.
+ *  
+ *  \todo Use the CMOS properly.
+ */
+static void floppy_detect_drive(void) {
+	uint8_t floppy_type = cmos_read(CMOS_FLOPPY_TYPE);
+	
+	uint8_t floppy_master = (floppy_type & 0xF0) >> 4;
+	uint8_t floppy_slave = floppy_type & 0x0F;
+	
+	switch (floppy_master) {
+		case 0x00:
+			kprintf("No master drive\n");
+			break;
+			
+		case 0x01:
+			kprintf("360KB 5.25 master drive\n");
+			break;
+			
+		case 0x02:
+			kprintf("1.2MB 5.25 master drive\n");
+			break;
+			
+		case 0x03:
+			kprintf("720KB 3.5 master drive\n");
+			break;
+			
+		case 0x04:
+			kprintf("1.44MB 3.5 master drive\n");
+			break;
+			
+		case 0x05:
+			kprintf("2.88MB 3.5 master drive\n");
+			break;
+			
+		default:
+			kprintf("Error master\n");
+			break;
+	}
+	
+	switch (floppy_slave) {
+		case 0x00:
+			kprintf("No slave drive\n");
+			break;
+			
+		case 0x01:
+			kprintf("360KB 5.25 slave drive\n");
+			break;
+			
+		case 0x02:
+			kprintf("1.2MB 5.25 slave drive\n");
+			break;
+			
+		case 0x03:
+			kprintf("720KB 3.5 slave drive\n");
+			break;
+			
+		case 0x04:
+			kprintf("1.44MB 3.5 slave drive\n");
+			break;
+			
+		case 0x05:
+			kprintf("2.88MB 3.5 slave drive\n");
+			break;
+			
+		default:
+			kprintf("Error slave\n");
+			break;
+	}
+}
+
+void floppy_set_working_drive(uint8_t drive) {
+	if(drive > 3) {
+		return;
+	}
+	current_drive = drive;
+}
+
+uint8_t floppy_get_working_drive(void) {
+	return current_drive;
+}
+
+uint8_t * floppy_read_sector(uint32_t sector_lba) {
 	if(current_drive > 3) {
 		return NULL;
 	}
@@ -292,6 +456,8 @@ uint8_t * floppy_read_sector(int sector_lba) {
 }
 
 void floppy_init(void) {
+	floppy_detect_drive();
+	
 	irq_install_handler(PIC_IRQ_DISKETTE_DRIVE, floppy_handler);
 
 	floppy_init_dma();

@@ -13,7 +13,7 @@
  */
 enum pte_flag_masks {
 	PTE_PRESENT			= 0x001,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1 |  */
-	PTE_WRITABLE		= 0x002,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x |  */
+	PTE_WRITEABLE		= 0x002,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x |  */
 	PTE_USER_MODE		= 0x004,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxx1xx |  */
 	PTE_WRITE_THOUGH	= 0x008,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxx1xxx |  */
 	PTE_NOT_CACHEABLE	= 0x010,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxx1xxxx |  */
@@ -30,7 +30,7 @@ enum pte_flag_masks {
  */
 enum pde_flag_masks {
 	PDE_PRESENT			= 0x001,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1 |  */
-	PDE_WRITABLE		= 0x002,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x |  */
+	PDE_WRITEABLE		= 0x002,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x |  */
 	PDE_USER_MODE		= 0x004,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxx1xx |  */
 	PDE_WRITE_THOUGH	= 0x008,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxx1xxx |  */
 	PDE_NOT_CACHEABLE	= 0x010,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxx1xxxx |  */
