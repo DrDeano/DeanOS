@@ -24,11 +24,11 @@ static void enable_paging() {
 
 void page_fault_handler(regs_t * regs) {
 	uint32_t addr;
-    __asm__ __volatile__ ("mov %0, cr2" : "=r"(addr));
+	__asm__ __volatile__ ("mov %0, cr2" : "=r"(addr));
 	
-    kprintf("EAX: 0x%p, EBX: 0x%p, ECX: 0x%p, EDX: 0x%p\n", regs->eax, regs->ebx, regs->ecx, regs->edx);
-    kprintf("ESI: 0x%p, EDI: 0x%p, EBP: 0x%p, ESP: 0x%p\n", regs->esi, regs->edi, regs->ebp, regs->esp);
-    kprintf("EIP: 0x%p, EFLAGS: 0x%p\n", regs->eip, regs->eflags);
+	kprintf("EAX: 0x%p, EBX: 0x%p, ECX: 0x%p, EDX: 0x%p\n", regs->eax, regs->ebx, regs->ecx, regs->edx);
+	kprintf("ESI: 0x%p, EDI: 0x%p, EBP: 0x%p, ESP: 0x%p\n", regs->esi, regs->edi, regs->ebp, regs->esp);
+	kprintf("EIP: 0x%p, EFLAGS: 0x%p\n", regs->eip, regs->eflags);
 	panic("PAGING: Page fault at 0x%p (0x%X)!\n", addr, regs->error_code);
 }
 

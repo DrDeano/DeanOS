@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /**
- *  \todo Return error code from PIT
+ * \todo Return error code from PIT
  */
 static void speaker_start(uint32_t frequency) {
 	pit_setup_counter(frequency, PIT_OCW_SELECT_COUNTER_2, PIT_OCW_MODE_SQUARE_WAVE_GENERATOR | PIT_OCW_BINARY_COUNT_BINARY);

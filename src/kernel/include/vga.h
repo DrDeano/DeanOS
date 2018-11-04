@@ -1,6 +1,6 @@
 /**
- *  \file vga.h
- *  \brief A very simple VGA driver.
+ * \file vga.h
+ * \brief A very simple VGA driver.
  */
 #ifndef INCLUDE_VGA_H
 #define INCLUDE_VGA_H
@@ -8,28 +8,28 @@
 #include <stdint.h>
 
 /**
- *  \brief The width of the display, 80 characters wide.
+ * \brief The width of the display, 80 characters wide.
  */
 #define VGA_WIDTH		80
 
 /**
- *  \brief The height of the display, 25 characters long.
+ * \brief The height of the display, 25 characters long.
  */
 #define VGA_HEIGHT		25
 
 /**
- *  \brief The memory mapped location of the display memory to write data to to display characters
- *  and colour.
+ * \brief The memory mapped location of the display memory to write data to to display characters
+ * and colour.
  */
 #define VGA_MEMORY		(uint16_t *) 0x000B8000
 
 /**
- *  \brief If set, disables the cursor.
+ * \brief If set, disables the cursor.
  */
 #define VGA_CURSOR_DISABLE	0x20
 
 /**
- *  \brief The VGA port addresses.
+ * \brief The VGA port addresses.
  */
 enum vga_port_address {
 	VGA_PORT_CRT_ADDRESS			= 0x03D4,	/**< The port address for the VGA register selection. */
@@ -37,8 +37,8 @@ enum vga_port_address {
 };
 
 /**
- *  \brief The indexes that is passed to the CRT address port to select the register for the data
- *  to be read or written to.
+ * \brief The indexes that is passed to the CRT address port to select the register for the data to
+ * be read or written to.
  */
 enum vga_cursor_scan_line {
 	VGA_REG_HORIZONTAL_TOTAL				= 0x00,		/**< \todo TODO. */
@@ -69,7 +69,7 @@ enum vga_cursor_scan_line {
 };
 
 /**
- *  \brief The values for the cursor scan line command.
+ * \brief The values for the cursor scan line command.
  */
 enum vga_cursor_scan_line_values {
 	VGA_CURSOR_SCANLINE_MINIMUM		= 0x00,		/**< The minimum scan line of the cursor, the very beginning. */
@@ -80,7 +80,7 @@ enum vga_cursor_scan_line_values {
 };
 
 /**
- *  \brief The set of colours that VGA supports and can display for the foreground and background.
+ * \brief The set of colours that VGA supports and can display for the foreground and background.
  */
 typedef enum vga_colour {
 	VGA_COLOUR_BLACK				= 0x00,		/**< The VGA colour value of black. */
@@ -102,7 +102,7 @@ typedef enum vga_colour {
 } vga_colour_t;
 
 /**
- *  \brief The set of shapes that can be displayed.
+ * \brief The set of shapes that can be displayed.
  */
 typedef enum vga_cursor_shape {
 	VGA_CURSOR_SHAPE_UNDERLINE,	/**< The cursor has the underline shape. */
@@ -110,53 +110,53 @@ typedef enum vga_cursor_shape {
 } vga_cursor_shape_t;
 
 /**
- *  \brief Takes two 4 bit values that represent the foreground and background colour of the text
- *  and returns a 8 bit value that gives both to be displayed
- *  
- *  \param [in] fg The foreground colour
- *  \param [in] bg The background colour
- *  \return Both combined into the 1 byte for the colour to be displayed
+ * \brief Takes two 4 bit values that represent the foreground and background colour of the text
+ * and returns a 8 bit value that gives both to be displayed
+ * 
+ * \param [in] fg The foreground colour
+ * \param [in] bg The background colour
+ * \return Both combined into the 1 byte for the colour to be displayed
  */
 uint8_t vga_entry_colour(vga_colour_t fg, vga_colour_t bg);
 
 /**
- *  \brief Create the 2 bytes entry that the VGA used to display a character with a foreground
- *  and background colour
- *  
- *  \param [in] uc The character
- *  \param [in] colour The foreground and background colour
- *  \return The VGA entry
+ * \brief Create the 2 bytes entry that the VGA used to display a character with a foreground
+ * and background colour
+ * 
+ * \param [in] uc The character
+ * \param [in] colour The foreground and background colour
+ * \return The VGA entry
  */
 uint16_t vga_entry(unsigned char uc, uint8_t colour);
 
 /**
- *  \brief Enables the blinking cursor to that is is visible.
+ * \brief Enables the blinking cursor to that is is visible.
  */
 void vga_enable_cursor(void);
 
 /**
- *  \brief Disables the blinking cursor to that is is visible.
+ * \brief Disables the blinking cursor to that is is visible.
  */
 void vga_disable_cursor(void);
 
 /**
- *  \brief Update the cursor position to the end of the current line or character printed.
- *  
- *  \param [in] x The horizontal position of the cursor.
- *  \param [in] y The vertical position of the cursor.
+ * \brief Update the cursor position to the end of the current line or character printed.
+ * 
+ * \param [in] x The horizontal position of the cursor.
+ * \param [in] y The vertical position of the cursor.
  */
 void vga_update_cursor(uint16_t x, uint16_t y);
 
-/** 
- *  \brief Set the shape of the cursor. This can be and underline or block shape.
- *
- *  \param [in] shape The enum \ref vga_cursor_shape_t that selects which shape to use.
- */     
+/**
+ * \brief Set the shape of the cursor. This can be and underline or block shape.
+ * 
+ * \param [in] shape The enum \ref vga_cursor_shape_t that selects which shape to use.
+ */
 
 void vga_set_cursor_shape(vga_cursor_shape_t shape);
 
 /**
- *  \brief Initialise the VGA text mode. This just sets the cursor and underline shape.
+ * \brief Initialise the VGA text mode. This just sets the cursor and underline shape.
  */
 void vga_init(void);
 

@@ -24,3 +24,5 @@ doc/
 
 *.cbp
 *.layout
+.vscode/
+*.code-workspace

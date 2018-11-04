@@ -1,9 +1,9 @@
-    [bits		32]
-    [section	.text]
+	[bits		32]
+	[section	.text]
 
-    [extern		kernel_main]
+	[extern		kernel_main]
 start:
-    call	kernel_main
+	call	kernel_main
 halt:
 	cli
 	hlt

@@ -17,9 +17,9 @@
 
 %macro m_reset_disk 0
 ; Now need to reset the floppy drive so that we can get information from it
-	mov		dl, byte [Logical_drive_number] ; The drive to reset
-	xor		ah, ah                          ; The sub function to reset the floppy
-	int		0x13                            ; Call BIOS interrupt 13h
+	mov		dl, byte [Logical_drive_number]	; The drive to reset
+	xor		ah, ah							; The sub function to reset the floppy
+	int		0x13							; Call BIOS interrupt 13h
 	jc		boot_error						; If there was an error resetting the floppy, then the carry bit will be set
 											; If so, jump to failure function and reboot
 %endmacro
@@ -27,8 +27,8 @@
 ; Fine a file on the disk
 ; m_find_file filename, load_segment
 %macro m_find_file 2
-	mov     ax, %2
-	mov     es, ax
+	mov		ax, %2
+	mov		es, ax
 	; Calculate the number of sectors for the root directory
 	; root_sectors = (root_size * 32) / 512
 	mov		ax, 32
@@ -108,13 +108,13 @@
 ; Read a file into memory
 ; m_read_file load_segment FAT_segment
 
-; AX    - Is used for the logical block address when reading the sector from the floppy using the FAT table
-;         The is used for calculating the next FAT entry to read
-; ES:BX - Is used for the buffer location which the sectors will be read into
-; CX    - Is used for calculating the next FAT entry
-;       - Then storing the next FAT entry
-; DX    - Is used for testing whether to mask the upper bits or shift out the 4 bits
-; DS:SI - Is used for the location for the FAT table and SI to index into the FAT table
+; AX	- Is used for the logical block address when reading the sector from the floppy using the FAT table
+;		- The is used for calculating the next FAT entry to read
+; ES:BX	- Is used for the buffer location which the sectors will be read into
+; CX	- Is used for calculating the next FAT entry
+;		- Then storing the next FAT entry
+; DX	- Is used for testing whether to mask the upper bits or shift out the 4 bits
+; DS:SI	- Is used for the location for the FAT table and SI to index into the FAT table
 
 %macro m_read_file 2
 	; The root directory will be loaded in a higher segment.
@@ -146,11 +146,11 @@
 	
 	mov		ax, cx							; Get the start of the FAT entry
 	xor		dx, dx							; Set DX to 0 for the multiply and divide
-	mov		bx, 3							; For multiply by 3    -|
-	mul		bx								;                       |
-	mov		bx, 2							; For divide by 2       |- This is for AX * 1.5
-	div		bx								; AX - (AX * 3) / 2    -|
-											; DX - (AX * 3) mod 2  - This to check which 4 bits of a byte is needed
+	mov		bx, 3							; For multiply by 3		-|
+	mul		bx								;						 |
+	mov		bx, 2							; For divide by 2		 |- This is for AX * 1.5
+	div		bx								; AX - (AX * 3) / 2		-|
+											; DX - (AX * 3) mod 2	- This to check which 4 bits of a byte is needed
 	mov		si, ax							; Set the location for the next FAT entry at DS:SI
 	
 	pop		bx								; Restore BX for the buffer location

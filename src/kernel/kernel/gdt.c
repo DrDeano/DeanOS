@@ -7,9 +7,9 @@ static gdt_ptr_t gdt_ptr;						/**< The GDT pointer that the CPU is loaded with 
 static tss_t tss;								/**< The task state segment entry. */
 
 /**
- *  \brief Inline assembly for loading the GDT and refreshing the code segment with the code
- *  segment offset of the kernel as we are still in kernel land. Also loads the kernel data segment
- *  into all the other segment registers.
+ * \brief Inline assembly for loading the GDT and refreshing the code segment with the code
+ * segment offset of the kernel as we are still in kernel land. Also loads the kernel data segment
+ * into all the other segment registers.
  */
 static inline void lgdt(void) {
 	__asm__ __volatile__ ("lgdt [eax]" : : "a" (&gdt_ptr));					// Load the GDT into the CPU
@@ -24,22 +24,22 @@ static inline void lgdt(void) {
 }
 
 /**
- *  \brief Inline assembly for loading the TSS into the CPU.
+ * \brief Inline assembly for loading the TSS into the CPU.
  */
 static inline void ltr(void) {
 	__asm__ __volatile__ ("ltr ax" : : "a" (GDT_TSS_OFFSET));
 }
 
 /**
- *  \brief Create an GDT entry into the table with values provided.
- *  
- *  \param [in] index      The index into the GDT table for the entry being created.
- *  \param [in] is_code    Whether the entry is a code or data segment.
- *  \param [in] ring_level Which ring level the code or data segment is to be created for.
+ * \brief Create an GDT entry into the table with values provided.
+ * 
+ * \param [in] index The index into the GDT table for the entry being created.
+ * \param [in] is_code Whether the entry is a code or data segment.
+ * \param [in] ring_level Which ring level the code or data segment is to be created for.
  */
 static void gdt_set_entry(size_t index, bool is_code, uint8_t ring_level) {
 	// Set up base address. Always 0
-    gdt_entries[index].base_low = 0;
+	gdt_entries[index].base_low = 0;
 	gdt_entries[index].base_high = 0;
 	
 	// Set up limits. Always 0xFFFFF
@@ -62,11 +62,11 @@ static void gdt_set_entry(size_t index, bool is_code, uint8_t ring_level) {
 }
 
 /**
- *  \brief Create a GDT entry for the TSS.
+ * \brief Create a GDT entry for the TSS.
  */
 static void tss_set_entry(void) {
 	// Set up base address
-    gdt_entries[GDT_TSS_INDEX].base_low = (((uintptr_t) &tss) & 0xFFFFFF);
+	gdt_entries[GDT_TSS_INDEX].base_low = (((uintptr_t) &tss) & 0xFFFFFF);
 	gdt_entries[GDT_TSS_INDEX].base_high = (((uintptr_t) &tss) >> 24) & 0xFF;
 	
 	// Set up limits
@@ -90,8 +90,8 @@ static void tss_set_entry(void) {
 }
 
 /**
- *  \brief Set up the full GDT table with a kernel code and data segment, user code and data
- *  segment, and the TSS.
+ * \brief Set up the full GDT table with a kernel code and data segment, user code and data
+ * segment, and the TSS.
  */
 static void gdt_setup(void) {
 	// NULL segment
@@ -110,7 +110,7 @@ static void gdt_setup(void) {
 }
 
 /**
- *  \brief Load the GDT into the CPU by creating the GDT pointer then loading it.
+ * \brief Load the GDT into the CPU by creating the GDT pointer then loading it.
  */
 static void gdt_load(void) {
 	// Create the GDT table
@@ -122,7 +122,7 @@ static void gdt_load(void) {
 }
 
 /**
- *  \brief Set up the TSS with the default values.
+ * \brief Set up the TSS with the default values.
  */
 static void tss_setup(void) {
 	tss.SS0 = GDT_KERNEL_DATA_OFFSET;

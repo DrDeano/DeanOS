@@ -1,9 +1,9 @@
 /**
- *  \file pic.h
- *
- *  \brief Functions, definitions and structures for setting up the Programmable Interrupt Controller.
- *  
- *  \todo For remapping, maybe need an io_wait between each PIC sending, see https://wiki.osdev.org/PIC.
+ * \file pic.h
+ * 
+ * \brief Functions, definitions and structures for setting up the Programmable Interrupt Controller.
+ * 
+ * \todo For remapping, maybe need an io_wait between each PIC sending, see https://wiki.osdev.org/PIC.
  */
 #ifndef INCLUDE_PIC_H
 #define INCLUDE_PIC_H
@@ -12,7 +12,7 @@
 #include <portio.h>
 
 /**
- *  \brief The port address for reading and writing to registers in the PIT.
+ * \brief The port address for reading and writing to registers in the PIT.
  */
 enum pic_port_address {
 	PIC_COMMAND_REG_MASTER				= 0x20,	/**< The port address for the master PIC command register. (Write only). */
@@ -26,7 +26,7 @@ enum pic_port_address {
 };
 
 /**
- *  \brief The initialisation control word 1. Primary control word for initialising the PIC.
+ * \brief The initialisation control word 1. Primary control word for initialising the PIC.
  */
 enum pit_icw1 {
 	PIC_ICW1_ICW4						= 0x01,	/**< xxxxxxx1 | If set, then the PIC expects to receive a initialisation control word 4. */
@@ -38,7 +38,7 @@ enum pit_icw1 {
 };
 
 /**
- *  \brief The initialisation control word 2. Map the base address of the interrupt vector table.
+ * \brief The initialisation control word 2. Map the base address of the interrupt vector table.
  */
 enum pit_icw2 {
 	PIC_MASTER_REMAP_OFFSET				= 0x20,	/**< The new port map for the master PIC. */
@@ -46,8 +46,8 @@ enum pit_icw2 {
 };
 
 /**
- *  \brief The initialisation control word 3. For Telling the master and slave where the cascading
- *  interrupts are coming from.
+ * \brief The initialisation control word 3. For Telling the master and slave where the cascading
+ * interrupts are coming from.
  */
 enum pit_icw3 {
 	PIC_ICW3_SLAVE_IRQ_MAP_TO_MASTER	= 0x02,	/**< xxxxxx1x | Tell the slave PIT to send interrupts to the master PIC on IRQ2, which is binary 2 (010). */
@@ -55,7 +55,7 @@ enum pit_icw3 {
 };
 
 /**
- *  \brief The initialisation control word 4. Tell the master and slave what mode to operate in.
+ * \brief The initialisation control word 4. Tell the master and slave what mode to operate in.
  */
 enum pit_icw4 {
 	PIC_ICW4_80x86_MODE					= 0x01,	/**< xxxxxxx1 | If set, then in 80x86 mode. If not set, then in MCS-80/86 mode */
@@ -67,7 +67,7 @@ enum pit_icw4 {
 };
 
 /**
- *  \brief Operation control word 1. Interrupt mask register.
+ * \brief Operation control word 1. Interrupt mask register.
  */
 enum pit_ocw1 {
 	PIC_OCW1_MASK_IRQ_0					= 0x01,	/**< xxxxxxx1 | Mask off IRQ 0 so won't send interrupt. */
@@ -81,7 +81,7 @@ enum pit_ocw1 {
 };
 
 /**
- *  \brief Operation control word 2.
+ * \brief Operation control word 2.
  */
 enum pit_ocw2 {
 	PIC_OCW2_INTERRUPT_LEVEL_1			= 0x01,	/**< xxxxxxx1 | The interrupt level 1, which the controller must react to. */
@@ -94,7 +94,7 @@ enum pit_ocw2 {
 };
 
 /**
- *  \brief Operation control word 3.
+ * \brief Operation control word 3.
  */
 enum pit_ocw3 {
 	PIC_OCW3_READ_ISR					= 0x00,	/**< xxxxxxx0 | Read the In Service Register register, bit 0 is unset. */
@@ -110,7 +110,7 @@ enum pit_ocw3 {
 };
 
 /**
- *  \brief IRQ's numbers for the PIC.
+ * \brief IRQ's numbers for the PIC.
  */
 enum pit_irqs {
 	PIC_IRQ_TIMER						= 0x00,	/**< The PIC IRQ for the timer. */
@@ -129,57 +129,57 @@ enum pit_irqs {
 };
 
 /**
- *  \brief Send a command to the master PIC on its assigned port.
- *  
- *  \param [in] cmd The command to send.
+ * \brief Send a command to the master PIC on its assigned port.
+ * 
+ * \param [in] cmd The command to send.
  */
 void pic_send_command_master(uint8_t cmd);
 
 /**
- *  \brief Send data to the master PIC on its assigned port.
- *  
- *  \param [in] data The data to send.
+ * \brief Send data to the master PIC on its assigned port.
+ * 
+ * \param [in] data The data to send.
  */
 void pic_send_data_master(uint8_t data);
 
 /**
- *  \brief Send a command to the slave PIC on its assigned port.
- *  
- *  \param [in] cmd The command to send.
+ * \brief Send a command to the slave PIC on its assigned port.
+ * 
+ * \param [in] cmd The command to send.
  */
 void pic_send_command_slave(uint8_t cmd);
 
 /**
- *  \brief Send data to the slave PIC on its assigned port.
- *  
- *  \param [in] data The data to send.
+ * \brief Send data to the slave PIC on its assigned port.
+ * 
+ * \param [in] data The data to send.
  */
 void pic_send_data_slave(uint8_t data);
 
 /**
- *  \brief Receive data from the master PIC from its assigned port.
- *  
- *  \return The value from the Interrupt Mask Register.
+ * \brief Receive data from the master PIC from its assigned port.
+ * 
+ * \return The value from the Interrupt Mask Register.
  */
 uint8_t pic_receive_data_master(void);
 
 /**
- *  \brief Receive data from the slave PIC from its assigned port.
- *  
- *  \return The value from the Interrupt Mask Register.
+ * \brief Receive data from the slave PIC from its assigned port.
+ * 
+ * \return The value from the Interrupt Mask Register.
  */
 uint8_t pic_receive_data_slave(void);
 
 /**
- *  \brief Send the end of interrupt command for a specific IRQ to the master and/or slave PIC's
- *  after an interrupt has completed.
- *  
- *  \param [in] irq The IRQ number for the interrupt that has finished.
+ * \brief Send the end of interrupt command for a specific IRQ to the master and/or slave PIC's
+ * after an interrupt has completed.
+ * 
+ * \param [in] irq The IRQ number for the interrupt that has finished.
  */
 void pic_send_end_of_interrupt(uint8_t irq);
 
 /**
- *  \brief Remap all the PIC IRQ's so that they don't conflict with the processors interrupts.
+ * \brief Remap all the PIC IRQ's so that they don't conflict with the processors interrupts.
  */
 void pic_remap_irq(void);
 

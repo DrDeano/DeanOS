@@ -21,14 +21,14 @@ static uint16_t tty_pages[5][VGA_WIDTH * TTY_ROW_TOTAL];			/**< A total of 5 pag
 static uint8_t tty_page_index;										/**< The current page index. */
 
 /**
- *  \brief Internal function for updating the cursor using \ref tty_column and \ref tty_row.
+ * \brief Internal function for updating the cursor using \ref tty_column and \ref tty_row.
  */
 static void tty_update_cursor(void) {
 	vga_update_cursor(tty_column, tty_row);
 }
 
 /**
- *  \brief Internal function for displaying the current page being displayed.
+ * \brief Internal function for displaying the current page being displayed.
  */
 static void display_page_number(void) {
 	size_t column_temp = tty_column;
@@ -46,12 +46,12 @@ static void display_page_number(void) {
 }
 
 /**
- *  \brief Take a character and a x, y position and put it into the video memory so that it is
- *  displayed on the screen.
- *  
- *  \param [in] c The character to be displayed.
- *  \param [in] x The x position on the screen.
- *  \param [in] y The y position on the screen.
+ * \brief Take a character and a x, y position and put it into the video memory so that it is
+ * displayed on the screen.
+ * 
+ * \param [in] c The character to be displayed.
+ * \param [in] x The x position on the screen.
+ * \param [in] y The y position on the screen.
  */
 static void tty_put_entry_at(unsigned char c, size_t x, size_t y) {
 	const size_t index = y * VGA_WIDTH + x;
@@ -76,25 +76,25 @@ static void tty_put_entry_at(unsigned char c, size_t x, size_t y) {
  *  \brief Internal function for moving lines up across multiple pages.
  */
 static void tty_pages_move_rows_up(uint16_t rows) {
-    // Move up rows up by "rows"
-    memmove(tty_pages[4], tty_pages[4] + (rows * VGA_WIDTH), (TTY_ROW_TOTAL - rows) * VGA_WIDTH * 2);
+	// Move up rows up by "rows"
+	memmove(tty_pages[4], tty_pages[4] + (rows * VGA_WIDTH), (TTY_ROW_TOTAL - rows) * VGA_WIDTH * 2);
 	
-    // Loop for the other 4 pages
-    for(int i = 3; i >= 0; i--) {
+	// Loop for the other 4 pages
+	for(int i = 3; i >= 0; i--) {
 		// Move the top rows of the current page to the page above
 		memmove(tty_pages[i + 1] + ((TTY_ROW_TOTAL - rows) * VGA_WIDTH), tty_pages[i], rows * VGA_WIDTH * 2);
 		
 		// Move the rows of the current page up
 		memmove(tty_pages[i], tty_pages[i] + (rows * VGA_WIDTH), (TTY_ROW_TOTAL - rows) * VGA_WIDTH * 2);
-    }
+	}
 	
-    // Clear the last line
-    memset(tty_pages[0] + ((TTY_ROW_TOTAL - 1) * VGA_WIDTH), blank, VGA_WIDTH * 2);
+	// Clear the last line
+	memset(tty_pages[0] + ((TTY_ROW_TOTAL - 1) * VGA_WIDTH), blank, VGA_WIDTH * 2);
 }
 
 /**
- *  \brief When the text/terminal gets to the bottom of the screen, then move all line up by the
- *  amount that are below the bottom of the screen. Usually moves up by one line.
+ * \brief When the text/terminal gets to the bottom of the screen, then move all line up by the
+ * amount that are below the bottom of the screen. Usually moves up by one line.
  */
 static void tty_scroll(void) {
 	// If at the end of the screen, scroll
@@ -116,10 +116,10 @@ static void tty_scroll(void) {
 }
 
 /**
- *  \brief The internal function to print a character without updating the cursor. For speed when
- *  printing a string as only need to update the cursor once.
- *  
- *  \param [in] c The character to print
+ * \brief The internal function to print a character without updating the cursor. For speed when
+ * printing a string as only need to update the cursor once.
+ * 
+ * \param [in] c The character to print
  */
 static void _tty_put_char(char c) {
 	unsigned char uc = c;
@@ -167,8 +167,8 @@ static void _tty_put_char(char c) {
 }
 
 /**
- *  \brief Print the DeanOS logo to the top of the screen with version number. Don't need to update
- *  the cursor as is called before the cursor is enabled.
+ * \brief Print the DeanOS logo to the top of the screen with version number. Don't need to update
+ * the cursor as is called before the cursor is enabled.
  */
 static void tty_print_logo(void) {
 	size_t column_temp = tty_column;
@@ -214,7 +214,7 @@ void tty_page_down(void) {
 }
 
 /**
- *  \todo Change clear so to move all rows up into the above pages.
+ * \todo Change clear so to move all rows up into the above pages.
  */
 void tty_clear(void) {
 	memset(tty_buffer + (TTY_ROW_MIN * VGA_WIDTH), (int) blank, VGA_WIDTH * VGA_HEIGHT * 2);
@@ -256,7 +256,7 @@ void tty_set_display_time(void) {
 	tty_column = 0;
 	tty_row = TTY_ROW_MIN - 1;
 	
-	read_rtc(&tty_time, true, true);
+	read_rtc(&tty_time, true);
 	
 	kprintf("                         %s %02d-%02d-%04d %02d:%02d:%02d", str_day[tty_time.day_of_week], tty_time.day, tty_time.month, tty_time.year, tty_time.hour, tty_time.minute, tty_time.second);
 	
@@ -275,6 +275,7 @@ rtc_date_time_t * tty_get_time(rtc_date_time_t * date) {
 
 void tty_set_color(vga_colour_t colour) {
 	tty_colour = colour;
+	blank = vga_entry('\0', tty_colour);
 }
 
 void tty_put_char(char c) {
@@ -298,10 +299,7 @@ void tty_init(boot_params * params) {
 	size_t row_offset = 0;
 	
 	// Set the colour to Black on white.
-	tty_colour = vga_entry_colour(VGA_COLOUR_LIGHT_GREY, VGA_COLOUR_BLACK);
-	
-	// The VGA entry for clearing the screen.
-	blank = vga_entry('\0', tty_colour);
+	tty_set_color(vga_entry_colour(VGA_COLOUR_LIGHT_GREY, VGA_COLOUR_BLACK));
 	
 	// Set the display memory map location.
 	tty_buffer = VGA_MEMORY;

@@ -7,7 +7,7 @@
 	
 ; Prints a character
 ; Input:
-;   BL - The character to print
+;	BL - The character to print
 print_char_32:
 	pusha
 	mov		edi, VIDMEM				; Let EDI point to the start of video memory
@@ -44,7 +44,7 @@ print_char_32:
 
 ; Print a null terminated string to the screen
 ; Input:
-;   ESI - Pointer to the string to print
+;	ESI - Pointer to the string to print
 print_string_32:
 	pusha
 

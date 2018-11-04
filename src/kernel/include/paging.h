@@ -1,6 +1,6 @@
 /**
- *  \file paging.h
- *  \brief Functions, definitions and structures for setting up paging.
+ * \file paging.h
+ * \brief Functions, definitions and structures for setting up paging.
  */
 #ifndef INCLUDE_PAGING_H
 #define INCLUDE_PAGING_H
@@ -9,7 +9,7 @@
 #include <stdbool.h>
 
 /**
- *  \brief The flags used in the page table entry.
+ * \brief The flags used in the page table entry.
  */
 enum pte_flag_masks {
 	PTE_PRESENT			= 0x001,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1 |  */
@@ -26,7 +26,7 @@ enum pte_flag_masks {
 };
 
 /**
- *  \brief The flags used in the page directory entry.
+ * \brief The flags used in the page directory entry.
  */
 enum pde_flag_masks {
 	PDE_PRESENT			= 0x001,		/**< xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxx1 |  */
@@ -43,24 +43,24 @@ enum pde_flag_masks {
 };
 
 /**
- *  \brief 
+ * \brief 
  */
 #define PAGE_DIRECTORY_INDEX(x)			(((x) >> 22) & 0x3ff)
 
 /**
- *  \brief 
+ * \brief 
  */
 #define PAGE_TABLE_INDEX(x)				(((x) >> 12) & 0x3ff)
 
 /**
- *  \brief 
+ * \brief 
  */
 #define PAGE_GET_PHYSICAL_ADDRESS(x)	(*x & ~0xfff)
 
 /**
- *  \struct pte_t
- *  
- *  \brief The structure for which the memory map is formatted by the BIOS.
+ * \struct pte_t
+ * 
+ * \brief The structure for which the memory map is formatted by the BIOS.
  */
 typedef struct {
 	bool present : 1;
@@ -75,9 +75,9 @@ typedef struct {
 } __attribute__((__packed__)) pte_t;
 
 /**
- *  \struct pde_t
- *  
- *  \brief The structure for which the memory map is formatted by the BIOS.
+ * \struct pde_t
+ * 
+ * \brief The structure for which the memory map is formatted by the BIOS.
  */
 typedef struct {
 	bool present : 1;
@@ -93,18 +93,18 @@ typedef struct {
 } __attribute__((__packed__)) pde_t;
 
 /**
- *  \struct page_table_t
- *  
- *  \brief The structure for which the memory map is formatted by the BIOS.
+ * \struct page_table_t
+ * 
+ * \brief The structure for which the memory map is formatted by the BIOS.
  */
 typedef struct {
 	pte_t pages[1024];
 } __attribute__((aligned(4096))) page_table_t;
 
 /**
- *  \struct page_directory_t
- *  
- *  \brief The structure for which the memory map is formatted by the BIOS.
+ * \struct page_directory_t
+ * 
+ * \brief The structure for which the memory map is formatted by the BIOS.
  */
 typedef struct {
 	pde_t tables[1024];

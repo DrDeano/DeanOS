@@ -21,7 +21,7 @@ extern void _irq14();
 extern void _irq15();
 
 /**
- *  \brief The list of handlers for each IRQ.
+ * \brief The list of handlers for each IRQ.
  */
 static irq_handler irq_handlers[IRQ_TOTAL] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -37,12 +37,11 @@ void irq_uninstall_handler(int irq_num) {
 }
 
 /**
- *  \brief Each of the IRQ ISR's point to this function, rather than
- *  the 'fault_handler' in 'isr.c'. The IRQ Controllers need
- *  to be told when you are done servicing them, so you need
- *  to send them an "End of Interrupt" command (0x20).
- *  
- *  \param [in] regs The registers when this is called.
+ * \brief Each of the IRQ ISR's point to this function, rather than the 'fault_handler' in 'isr.c'.
+ * The IRQ Controllers need to be told when you are done servicing them, so you need to send them
+ * an "End of Interrupt" command (0x20).
+ * 
+ * \param [in] regs The registers when this is called.
  */
 void _irq_handler(regs_t * regs) {
 	uint8_t irq_num = regs->int_num - 32;
@@ -60,33 +59,33 @@ void _irq_handler(regs_t * regs) {
 }
 
 void irq_set_mask(uint8_t irq_num) {
-    uint16_t port;
-    uint8_t value;
+	uint16_t port;
+	uint8_t value;
 	
-    if(irq_num < 8) {
-        port = PIC_INTERRUPT_MASK_REG_MASTER;
-    } else {
-        port = PIC_INTERRUPT_MASK_REG_SLAVE;
-        irq_num -= 8;
-    }
-    
-    value = in_port_byte(port) | (1 << irq_num);
-    out_port_byte(port, value);        
+	if(irq_num < 8) {
+		port = PIC_INTERRUPT_MASK_REG_MASTER;
+	} else {
+		port = PIC_INTERRUPT_MASK_REG_SLAVE;
+		irq_num -= 8;
+	}
+	
+	value = in_port_byte(port) | (1 << irq_num);
+	out_port_byte(port, value);
 }
 
 void irq_clear_mask(uint8_t irq_num) {
-    uint16_t port;
-    uint8_t value;
+	uint16_t port;
+	uint8_t value;
 	
-    if(irq_num < 8) {
-        port = PIC_INTERRUPT_MASK_REG_MASTER;
-    } else {
-        port = PIC_INTERRUPT_MASK_REG_SLAVE;
-        irq_num -= 8;
-    }
-    
-    value = in_port_byte(port) & ~(1 << irq_num);
-    out_port_byte(port, value);        
+	if(irq_num < 8) {
+		port = PIC_INTERRUPT_MASK_REG_MASTER;
+	} else {
+		port = PIC_INTERRUPT_MASK_REG_SLAVE;
+		irq_num -= 8;
+	}
+	
+	value = in_port_byte(port) & ~(1 << irq_num);
+	out_port_byte(port, value);
 }
 
 void irq_init(void) {

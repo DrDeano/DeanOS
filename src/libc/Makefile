@@ -11,7 +11,8 @@ $(ARCH_FREEOBJS) \
 stdio.o \
 stdlib.o \
 string.o \
-time.o
+time.o \
+ctype.o
  
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

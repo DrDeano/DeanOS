@@ -24,6 +24,7 @@ OBJS = $(BIN)/start.o \
 	$(BIN)/vga.o \
 	$(BIN)/tty.o \
 	$(BIN)/pit.o \
+	$(BIN)/dma.o \
 	$(BIN)/keyboard.o \
 	$(BIN)/pmm.o \
 	$(BIN)/paging.o \
@@ -32,6 +33,7 @@ OBJS = $(BIN)/start.o \
 	$(BIN)/speaker.o \
 	$(BIN)/floppy.o \
 	$(BIN)/panic.o \
+	$(BIN)/kernel_task.o \
 	$(BIN)/kernel_main.o
 
 all: clean $(BIN)/kernel.bin | $(BIN)

@@ -38,8 +38,8 @@ extern void _isr30();
 extern void _isr31();
 
 /**
- *  \brief A list of string that say what exception has been raised so can be printed to the user so
- *  that they know what happened.
+ * \brief A list of string that say what exception has been raised so can be printed to the user so
+ * that they know what happened.
  */
 static char * exception_msg[] = {
 	"Divide By Zero",
@@ -81,16 +81,16 @@ static char * exception_msg[] = {
  */
 static isr_handler isr_handlers[ISR_TOTAL] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0
 };
 
 /**
- *  \brief The main handler that is called when a exception is raises. It then calls the
- *  appropriate handler for the exception if one is present.
- *  
- *  \param [in] regs The registers
+ * \brief The main handler that is called when a exception is raises. It then calls the appropriate
+ * handler for the exception if one is present.
+ * 
+ * \param [in] regs The registers
  */
 void _fault_handler(regs_t * regs) {
 	// Get the handler

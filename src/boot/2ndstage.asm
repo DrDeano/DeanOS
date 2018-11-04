@@ -1,10 +1,10 @@
 ; ------------------------------------------------------------
 ; Stage 2 of the bootloader
 ; ------------------------------------------------------------
-%define boot_sector_location    (0x7C03)	; The location of the boot sector
+%define boot_sector_location	(0x7C03)	; The location of the boot sector
 %define fat_segment				(0x0050)	; The memory location to load the FAT into memory
-;%define stage_2_location        (0x2000)	; The location of the second stage bootloader
-%define stage_2_location        (0x7E00)
+;%define stage_2_location		(0x2000)	; The location of the second stage bootloader
+%define stage_2_location		(0x7E00)
 
 %define kernel_stack			(0x9FBFF)	; The location of the start of the bottom of the stack
 
@@ -94,25 +94,25 @@ boot_error:
 
 idt_descriptor:
 	dw 0x0000						; 256 entries of 8 bytes for the interrupt table
-    dd 0x0000						; The location of the table, at 0x0000:0x0000
+	dd 0x0000						; The location of the table, at 0x0000:0x0000
 	
 gdt_descriptor:
 	dw 0x0017						; 3 tables of 8 bytes total (minus 1)
-    dd 0x0800						; The location of the 3 tables, at 0x0000:0x0800, just bellow the IDT
+	dd 0x0800						; The location of the 3 tables, at 0x0000:0x0800, just bellow the IDT
 
-kernel_filename  	db "KERNEL  BIN", 0
-disk_error_msg  	db "Disk error", 0
-loading_msg     	db "Loading: 2nd stage bootloader", 0
-reboot_msg      	db "Press any key to reboot", 0
-a20_error	      	db "a20 line not initialised", 0
+kernel_filename		db "KERNEL  BIN", 0
+disk_error_msg		db "Disk error", 0
+loading_msg			db "Loading: 2nd stage bootloader", 0
+reboot_msg			db "Press any key to reboot", 0
+a20_error			db "a20 line not initialised", 0
 
-loading_kernel     	db "Loading: Kernel", 0x0A, 0
+loading_kernel		db "Loading: Kernel", 0x0A, 0
 
 memory_map_error	db "Error getting memory map from BIOS INT 0x15 0xE820", 0
 
 ; Data storage
-root_sectors 		db 0,0
-root_start   		db 0,0
+root_sectors		db 0,0
+root_start			db 0,0
 file_start			db 0,0
 
 kernel_size			db 0,0

@@ -1,6 +1,6 @@
 /**
- *  \file time.h
- *  \brief The C Library: time.
+ * \file time.h
+ * \brief The C Library: time.
  */
 #ifndef _TIME_H
 #define _TIME_H 1
@@ -12,13 +12,13 @@ extern "C" {
 #endif
 
 /**
- *  \brief This macro represents the number of processor clocks per second.
- *  \todo Will need to be set correctly in the future.
+ * \brief This macro represents the number of processor clocks per second.
+ * \todo Will need to be set correctly in the future.
  */
 #define CLOCKS_PER_SEC 1
 
 /**
- *  \brief The structure for holding all the value in the data and time.
+ * \brief The structure for holding all the value in the data and time.
  */
 struct tm {
 	int tm_sec;		/**< seconds of minutes from 0 to 61 */
@@ -33,12 +33,12 @@ struct tm {
 };
 
 /**
- *  \brief The clock_t type
+ * \brief The clock_t type
  */
 typedef uint32_t clock_t;
 
 /**
- *  \brief The time_t type
+ * \brief The time_t type
  */
 typedef uint32_t time_t;
 

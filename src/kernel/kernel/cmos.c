@@ -4,11 +4,11 @@
 #include <stdint.h>
 
 /**
- *  \todo Set the NMI bit correctly
+ * \todo Set the NMI bit correctly
  */
 
 /**
- *  \todo Add delay between port operations maybe
+ * \todo Add delay between port operations maybe
  */
 uint8_t cmos_read(uint8_t reg) {
 	out_port_byte(CMOS_ADDRESS, reg);

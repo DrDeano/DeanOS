@@ -2,7 +2,7 @@
 	
 ; Get the number of KB of conventional memory up to 64KB.
 ; Output:
-;   AX - The number of KB of conventional memory or -1 if error.
+;	AX - The number of KB of conventional memory or -1 if error.
 %macro m_bios_get_conventional_memory_size 0
 	int		0x12
 	jc		short .error_1
@@ -19,7 +19,7 @@
 
 ; Get the number of contiguous KB starting at 1MB of extended memory up to 64MB.
 ; Output:
-;   AX - The number of contiguous KB starting at 1MB of extended memory or -1 if error.
+;	AX - The number of contiguous KB starting at 1MB of extended memory or -1 if error.
 %macro bios_get_extended_memory_size 0
 	mov		ax, 0x88
 	int		0x15
@@ -37,8 +37,8 @@
 	
 ; Get the memory size for above 64MB.
 ; Output:
-;   AX - KB between 1MB and 16MB. If error, then returns -1.
-;   BX - Number of 64KB blocks above 16MB
+;	AX - KB between 1MB and 16MB. If error, then returns -1.
+;	BX - Number of 64KB blocks above 16MB
 %macro m_bios_get_memory_size_E801 0
 	push	ecx
 	push	edx

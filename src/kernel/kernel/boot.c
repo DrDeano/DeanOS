@@ -9,7 +9,7 @@ boot_params * get_boot_params(boot_params * param) {
 	boot_params * _params = (boot_params *) ADDRESS;
 	
 	// If the signature is valid, then return the parameters
-    if (_params->sig == SIGNATURE) {
+	if (_params->sig == SIGNATURE) {
 		param->sig = _params->sig;
 		param->cursor_x = _params->cursor_x;
 		param->cursor_y = _params->cursor_y;
@@ -18,8 +18,8 @@ boot_params * get_boot_params(boot_params * param) {
 		param->memory_map = _params->memory_map;
 		param->memory_map_length = _params->memory_map_length;
 		param->kernel_size = _params->kernel_size;
-        return param;
-    }
+		return param;
+	}
 	
 	// If invalid, then zero all values and return NULL
 	param->sig = 0;

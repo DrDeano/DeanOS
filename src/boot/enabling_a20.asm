@@ -1,9 +1,9 @@
-; Purpose: to check the status of the a20 line in a completely self-contained state-preserving way.
-;          The function can be modified as necessary by removing pushes at the beginning and their
-;          respective pop's at the end if complete self-containment is not required.
+; Purpose:	To check the status of the a20 line in a completely self-contained state-preserving way.
+;			The function can be modified as necessary by removing pushes at the beginning and their
+;			respective pop's at the end if complete self-containment is not required.
 ;
-; Returns: 0 in AX if the a20 line is disabled (memory wraps around)
-;          1 in AX if the a20 line is enabled (memory does not wrap around)
+; Returns:	0 in AX if the a20 line is disabled (memory wraps around)
+;			1 in AX if the a20 line is enabled (memory does not wrap around)
 test_a20:
 	pushf
 	push	ds
@@ -80,7 +80,7 @@ a20_wait_command:									; But need to check if the keyboard is ready to receiv
 	test	al, 0x02
 	jnz		a20_wait_command
 	ret
-	
+
 a20_wait_data:										;  But need to check if the keyboard is ready to receive data
 	in		al, 0x64
 	test	al, 0x01

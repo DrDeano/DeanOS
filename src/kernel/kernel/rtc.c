@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+static bool daylight_savings;	/**< Whether the clock (in UK) is 1 hour ahead. */
+
 static uint8_t century_reg = 0;	/**< The register location for returning the century. As some CMOS chips don't support the
 									century register, and accessing it could lead to undefined results. The CMOS will set this if
 									there is a century register, else it will stay zero. So check this value, and if not zero, then
@@ -17,25 +19,25 @@ static uint8_t century_reg = 0;	/**< The register location for returning the cen
 									have to add on the century to the year as the year is only the lower 2 numbers. */
 
 /**
- *  \brief Get whether the update flag is set or not. The update flag is set when the date and time
- *  in the CMOS chip is being updated. If the date and time is being updated, then will have to
- *  wait until the update flag is unset. If trying to get the current date and time when the update
- *  flag is set, this could lead to inconsistent values.
- *  
- *  \return If return a non zero value, then the update flag is set, and shouldn't get the current
- *  date and time. If return zero, then the flag isn't set and can get the current date and time.
- *  This function will either return 0x00 or 0x80.
+ * \brief Get whether the update flag is set or not. The update flag is set when the date and time
+ * in the CMOS chip is being updated. If the date and time is being updated, then will have to wait
+ * until the update flag is unset. If trying to get the current date and time when the update flag
+ * is set, this could lead to inconsistent values.
+ * 
+ * \return If return a non zero value, then the update flag is set, and shouldn't get the current
+ * date and time. If return zero, then the flag isn't set and can get the current date and time.
+ * This function will either return 0x00 or 0x80.
  */
 static uint8_t get_update_in_progress_flag(void) {
 	return (cmos_read(CMOS_REG_STATUS_A) & 0x80);
 }
 
 /**
- *  \brief Calculate the day of the week from the supplied date.
- *  
- *  \param [in] date The date to calculate the day of the week from.
- *  
- *  \return The pointer the date give as the parameter.
+ * \brief Calculate the day of the week from the supplied date.
+ * 
+ * \param [in] date The date to calculate the day of the week from.
+ * 
+ * \return The pointer the date give as the parameter.
  */
 static rtc_date_time_t * day_of_week(rtc_date_time_t * date) {
 	static const int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
@@ -44,7 +46,16 @@ static rtc_date_time_t * day_of_week(rtc_date_time_t * date) {
 	return date;
 }
 
-rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h, const bool day_light_savings) {
+/**
+ * \brief 
+ * 
+ * \todo Set daylight_savings correctly
+ */
+static void human_clock_init(void) {
+	daylight_savings = true;
+}
+
+rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h) {
 	uint8_t second;
 	uint8_t minute;
 	uint8_t hour;
@@ -126,9 +137,9 @@ rtc_date_time_t * read_rtc(rtc_date_time_t * date, const bool hour_24h, const bo
 	// Convert to 24 hour clock
 	if(hour_24h && !(reg_B & 0x02) && (hour & 0x80)) {
 		hour = ((hour & 0x7F) + 12) % 24;
-	}  // Else 12 hour
+	} // Else 12 hour
 	
-	if(day_light_savings && hour_24h) {
+	if(daylight_savings && hour_24h) {
 		if(hour == 23) {
 			hour = 0;
 		} else {
@@ -198,14 +209,14 @@ void set_rate(uint8_t rate) {
 }
 
 /**
- *  \brief The RTC handler that is called when the RTC creates an interrupt.
- *  
- *  \param [in] regs The register of the CPU when the interrupt was called.
+ * \brief The RTC handler that is called when the RTC creates an interrupt.
+ * 
+ * \param [in] regs The register of the CPU when the interrupt was called.
  */
 static void rtc_handler(regs_t * regs) {
 	(void) regs;
 	/**
-	 *  \todo May change to update internal time and have get time function and other function poll this.
+	 * \todo May change to update internal time and have get time function and other function poll this.
 	 */
 	tty_set_display_time();
 	
@@ -214,6 +225,8 @@ static void rtc_handler(regs_t * regs) {
 }
 
 void rtc_init(void) {
+	human_clock_init();
+	
 	// Install the handler for the real time clock
 	irq_install_handler(PIC_IRQ_CMOS_REALT_TIME_CLOCK, rtc_handler);
 	

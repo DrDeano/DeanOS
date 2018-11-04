@@ -1,43 +1,43 @@
 ; Print a null terminated string to the screen
 ; DS:SI is the location of the string
 ; Input:
-;   SI - pointer to the string to be printed in register SI
+;	SI - pointer to the string to be printed in register SI
 print_string_with_new_line:
-    pusha				; Push all registers onto the stack
-    mov     ah, 0x0E	; Specify the teletype output function
+	pusha				; Push all registers onto the stack
+	mov		ah, 0x0E	; Specify the teletype output function
 	xor		bx, bx
 .loop:
-    lodsb				; Load byte at address SI into AL and increment SI
-    cmp	    al, 0		; If it the end of the null-terminated string
-    je      .done		; Then exit
-    int     0x10		; Else print the character in AL as an interrupt into the BIOS
-    jmp     short .loop ; Repeat for next character
+	lodsb				; Load byte at address SI into AL and increment SI
+	cmp		al, 0		; If it the end of the null-terminated string
+	je		.done		; Then exit
+	int		0x10		; Else print the character in AL as an interrupt into the BIOS
+	jmp		short .loop ; Repeat for next character
 .done:
 	; Print the line feed and carriage return
 	mov		al, 0x0A	; Teletype print sub function(0x0E), Line feed (0x0A)
-    int     0x10
-    mov     al, 0x0D	; Carriage return
-    int     0x10
-    popa				; Pop the register of the stack
-    ret					; And return to caller
+	int		0x10
+	mov		al, 0x0D	; Carriage return
+	int		0x10
+	popa				; Pop the register of the stack
+	ret					; And return to caller
 
 ; Reboot the computer if there was an error
 reboot:
 	m_write_line reboot_msg
-    
-    xor 	ah, ah					; Sub function for reading a character
-    int 	0x16     				; Wait for key press
-    int 	0x19     				; Warm reboot
-    
-    cli         	 				; If failed to reboot, halt
-    hlt								; Halt
+	
+	xor		ah, ah					; Sub function for reading a character
+	int		0x16	 				; Wait for key press
+	int		0x19	 				; Warm reboot
+	
+	cli		 	 				; If failed to reboot, halt
+	hlt								; Halt
 	
 ; Read a sector from the disk
 ; es:bx is the location of the buffer that the data is read into
 ; As reads often fail, it will try 4 times to read from the disk. The counter is stored in CX.
 ; With the data buffer at ES:BX
 ; Input:
-;	AX    - The logical block address (LBA)
+;	AX	- The logical block address (LBA)
 ;	ES:BX - The buffer location which the sector will be read into
 read_sector:
 	xor		cx, cx					; Set the counter to 0
@@ -48,9 +48,9 @@ read_sector:
 	; Convert the logical block address into the head-cylinder/track-sector values
 	
 ; The conversions are:
-; (1) Sector   = (LBA mod SectorsPerTrack) + 1
-; (2) Cylinder = (LBA / SectorsPerTrack) / NumHeads
-; (3) Head     = (LBA / SectorsPerTrack) mod NumHeads
+; (1) Sector	= (LBA mod SectorsPerTrack) + 1
+; (2) Cylinder	= (LBA / SectorsPerTrack) / NumHeads
+; (3) Head		= (LBA / SectorsPerTrack) mod NumHeads
 ;
 ; Input:
 ;	AX - the logical block address
@@ -65,16 +65,16 @@ read_sector:
 	;mov		bx, word [Sectors_per_track]	; Get the sectors per track
 	xor		dx, dx						; Set DX to 0x0 (part of operand for DIV instruction and needs to be 0x00)
 	div		word [Sectors_per_track]	; Divide (DX:AX / Sectors_per_track)
-										; Quotient (AX)  - LBA / SectorsPerTrack
-										; Remainder (DX) - LBA mod SectorsPerTrack
+										; Quotient (AX)		- LBA / SectorsPerTrack
+										; Remainder (DX)	- LBA mod SectorsPerTrack
 									
 	inc		dx							; (1) Sector = (LBA mod SectorsPerTrack) + 1
 	mov		cl, dl						; Store sector in cl as defined for the output and for the 0x13 BIOS interrupt
 	
 	;mov		bx, word [Head_count]	; Get the number of heads
 	xor		dx, dx
-	div		word [Head_count]			; Quotient (AX)  - Cylinder = (LBA / SectorsPerTrack) / NumHeads
-										; Remainder (DX) - Head     = (LBA / SectorsPerTrack) mod NumHeads
+	div		word [Head_count]			; Quotient (AX)		- Cylinder	= (LBA / SectorsPerTrack) / NumHeads
+										; Remainder (DX)	- Head		= (LBA / SectorsPerTrack) mod NumHeads
 	
 	mov		ch, al						; Store cylinder in ch as defined for the output and for the 0x13 BIOS interrupt
 	mov		dh, dl						; Store head in DH as defined for the output and for the 0x13 BIOS interrupt

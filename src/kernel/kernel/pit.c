@@ -12,39 +12,39 @@ static volatile uint32_t speaker_ticks;	/**< The number of tick that has passed 
 static uint16_t frequency;				/**< The frequency the PIT runs at. */
 
 /**
- *  \brief Inline function to send a command to the PIT command register.
- *  
- *  \param [in] cmd The command to send to the PIT.
+ * \brief Inline function to send a command to the PIT command register.
+ * 
+ * \param [in] cmd The command to send to the PIT.
  */
 static void pit_send_command(uint8_t cmd) {
 	out_port_byte(PIT_REG_COMMAND, cmd);
 }
 
 /**
- *  \brief Inline function for sending data to counter of the PIT. Will be only one of the 3
- *  counters as is an internal function.
- *  
- *  \param [in] data The data to send.
+ * \brief Inline function for sending data to counter of the PIT. Will be only one of the 3
+ * counters as is an internal function.
+ * 
+ * \param [in] data The data to send.
  */
 static void pit_send_data(uint8_t counter, uint8_t data) {
 	out_port_byte(counter, data);
 }
 
 /**
- *  \brief Inline function for receiving data from a counter of the PIT. Will be only one of the 3
- *  counters as is an internal function.
- *  
- *  \param [in] counter The counter number to get the data from.
- *  \return The data from the counter register.
+ * \brief Inline function for receiving data from a counter of the PIT. Will be only one of the 3
+ * counters as is an internal function.
+ * 
+ * \param [in] counter The counter number to get the data from.
+ * \return The data from the counter register.
  */
 /*static uint8_t pit_receive_data_counter(uint8_t counter) {
 	return in_port_byte(counter);
 }*/
 
 /**
- *  \brief The PIT handler that is called when the PIT creates an interrupt.
- *  
- *  \param [in] regs The register of the CPU when the interrupt was called.
+ * \brief The PIT handler that is called when the PIT creates an interrupt.
+ * 
+ * \param [in] regs The register of the CPU when the interrupt was called.
  */
 static void pit_handler(regs_t * regs) {
 	(void) regs;		// Not using the registers
@@ -52,7 +52,7 @@ static void pit_handler(regs_t * regs) {
 }
 
 /**
- *  \todo Return error code if fail.
+ * \todo Return error code if fail.
  */
 void pit_setup_counter(uint16_t freq, uint8_t counter, uint8_t mode) {
 	if(freq == 0) {
@@ -105,7 +105,7 @@ uint16_t pit_get_frequency(void) {
 
 void pit_wait(uint32_t milliseconds) {
 	/**
-	 *  \todo Have a check so not to over flow.
+	 * \todo Have a check so not to over flow.
 	 */
 	uint32_t eticks = pit_ticks + milliseconds;
 	while(pit_ticks < eticks) {

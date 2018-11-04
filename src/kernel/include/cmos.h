@@ -1,6 +1,6 @@
 /**
- *  \file cmos.h
- *  \brief Functions, definitions and structures for writing and reading to and from the CMOS chip.
+ * \file cmos.h
+ * \brief Functions, definitions and structures for writing and reading to and from the CMOS chip.
  */
 #ifndef INCLUDED_CMOS_H
 #define INCLUDED_CMOS_H
@@ -8,36 +8,36 @@
 #include <stdint.h>
 
 /**
- *  \todo Move to NMI file
+ * \todo Move to NMI file
  */
 
 /**
- *  \brief The value to unset the non-maskable interrupt. This will be sent over port 0x70.
+ * \brief The value to unset the non-maskable interrupt. This will be sent over port 0x70.
  */
 #define CMOS_DISABLE_NMI	0x00
 
 /**
- *  \brief The value to set the non-maskable interrupt. This will be sent over port 0x70.
+ * \brief The value to set the non-maskable interrupt. This will be sent over port 0x70.
  */
 #define CMOS_ENABLE_NMI		0x80
 
 /**
- *  \brief The port address for the CMOS command register.
+ * \brief The port address for the CMOS command register.
  */
 #define CMOS_ADDRESS		0x70
 
 /**
- *  \brief The port address for the CMOS data register.
+ * \brief The port address for the CMOS data register.
  */
 #define CMOS_DATA			0x71
 
 /**
- *  \brief The register for getting the type of floppy device connected to the computer.
+ * \brief The register for getting the type of floppy device connected to the computer.
  */
 #define CMOS_FLOPPY_TYPE	0x10
 
 /**
- *  \brief The list of registers that access values used in the real time clock.
+ * \brief The list of registers that access values used in the real time clock.
  */
 enum cmos_rtc_registers {
 	CMOS_REG_SECOND		= 0x00,	/**< The register location for returning the seconds, (0 - 59). */
@@ -51,7 +51,7 @@ enum cmos_rtc_registers {
 };
 
 /**
- *  \brief The list of registers that access the status registers.
+ * \brief The list of registers that access the status registers.
  */
 enum cmos_status_registers {
 	CMOS_REG_STATUS_A	= 0x0A,	/**< The register location for return the status A register. */
@@ -60,19 +60,19 @@ enum cmos_status_registers {
 };
 
 /**
- *  \brief Read data from a register in the CMOS chip and return its value.
- *  
- *  \param [in] reg The register to read the data from.
- *  
- *  \return The data in the register returned.
+ * \brief Read data from a register in the CMOS chip and return its value.
+ * 
+ * \param [in] reg The register to read the data from.
+ * 
+ * \return The data in the register returned.
  */
 uint8_t cmos_read(uint8_t reg);
 
 /**
- *  \brief Write data to a register in the CMOS chip.
- *  
- *  \param [in] reg The register to write the data to.
- *  \param [in] val The data to write to the register.
+ * \brief Write data to a register in the CMOS chip.
+ * 
+ * \param [in] reg The register to write the data to.
+ * \param [in] val The data to write to the register.
  */
 void cmos_write(uint8_t reg, uint8_t val);
 

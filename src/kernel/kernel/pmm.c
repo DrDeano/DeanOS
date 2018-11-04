@@ -14,38 +14,38 @@ static uint32_t memory_bitmap_block_offset;		/**< The number block that the memo
 static uint32_t memory_bitmap_block_size;		/**< The number of blocks the the memory bitmap takes up. */
 
 /**
- *  \brief Set a bit in the memory bitmap to say that it has been allocated.
- *
- *  \param [in] bit The bit to set in the bitmap.
+ * \brief Set a bit in the memory bitmap to say that it has been allocated.
+ * 
+ * \param [in] bit The bit to set in the bitmap.
  */
 static void set_map_bit(uint32_t bit) {
 	memory_bit_map[bit / 32] |= (1 << (bit % 32));
 }
 
 /**
- *  \brief Unset a bit in the memory bitmap to say that it has been unallocated.
- *
- *  \param [in] bit The bit to unset in the bitmap.
+ * \brief Unset a bit in the memory bitmap to say that it has been unallocated.
+ * 
+ * \param [in] bit The bit to unset in the bitmap.
  */
 static void unset_map_bit(uint32_t bit) {
 	memory_bit_map[bit / 32] &= ~(1 << (bit % 32));
 }
 
 /**
- *  \brief Get whether the memory bitmap bit is set.
- *
- *  \param [in] bit The bit to check if set.
+ * \brief Get whether the memory bitmap bit is set.
+ * 
+ * \param [in] bit The bit to check if set.
  */
 static bool get_map_bit(uint32_t bit) {
 	return memory_bit_map[bit / 32] & (1 << (bit % 32));
 }
 
 /**
- *  \brief Find the next available block that can be allocated.
- *
- *  \param [in] frame The pointer to the memory location that can be allocated.
- *  
- *  \return Whether a block was found. If no available memory, then return false.
+ * \brief Find the next available block that can be allocated.
+ * 
+ * \param [in] frame The pointer to the memory location that can be allocated.
+ * 
+ * \return Whether a block was found. If no available memory, then return false.
  */
 static bool get_first_free_block(uint32_t * frame) {
 	// Loop through a set of blocks and test if the bit map is 0xFFFFFFFF
@@ -66,12 +66,12 @@ static bool get_first_free_block(uint32_t * frame) {
 }
 
 /**
- *  \brief Find the next available continues blocks that can be allocated.
- *
- *  \param [in] frame      The pointer to the memory location that can be allocated.
- *  \param [in] num_blocks The number of blocks to find.
- *  
- *  \return Whether a continues number blocks was found. If no available memory, then return false.
+ * \brief Find the next available continues blocks that can be allocated.
+ * 
+ * \param [in] frame The pointer to the memory location that can be allocated.
+ * \param [in] num_blocks The number of blocks to find.
+ * 
+ * \return Whether a continues number blocks was found. If no available memory, then return false.
  */
 static bool get_first_free_blocks(uint32_t * frame, uint32_t num_blocks) {
 	if(num_blocks == 0) {

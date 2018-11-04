@@ -8,8 +8,8 @@ noreturn void panic(const char * format, ...) {
 	// Disable interrupts.
 	interrupt_disable();
 	
-    // Get args.
-    va_list args;
+	// Get args.
+	va_list args;
 	va_start(args, format);
 	
 	// Show panic.
